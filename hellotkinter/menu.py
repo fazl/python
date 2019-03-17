@@ -27,7 +27,18 @@ def handleHelpAbout():
 
 # basic window with title and standard controls
 win = Tk.Tk() 
-frame = Tk.Frame( win, width=200, height=200 )
+
+# just some buttons in a frame parked at the top, for a toolbar
+# instead of text=".." can use image= for which you can load
+# an image from disk using PhotoImage constructor.
+toolbar = Tk.Frame( win )
+b = Tk.Button(toolbar, text="new", width=6, command=handleNewFile)
+b.pack(side="left", padx=2, pady=2)
+
+b = Tk.Button(toolbar, text="open", width=6, command=handleOpenFile)
+b.pack(side="left", padx=2, pady=2)
+
+toolbar.pack(side="top", fill="x")
 
 
 # create main menu
