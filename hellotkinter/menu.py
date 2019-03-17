@@ -13,17 +13,18 @@ except ImportError:
 
 # menu handlers
 def handleNewFile():
-    print("clicked menu NewFile")
+    status.config(text="clicked File|New")
 
 def handleOpenFile():
-    print("clicked menu OpenFile")
+    status.config(text="clicked File|Open")
 
 def handleExit():
-    print("clicked menu Exit")
+    status.config(text="So long..")
+    print("clicked menu File|Exit")
     win.destroy()
 
 def handleHelpAbout():
-    print("clicked menu About")
+    status.config(text="clicked Help|About")
 
 # basic window with title and standard controls
 win = Tk.Tk() 
@@ -59,6 +60,11 @@ mainMenu.add_separator()
 helpmenu = Tk.Menu(mainMenu)
 mainMenu.add_cascade(label="Help", menu=helpmenu)
 helpmenu.add_command(label="About", command=handleHelpAbout)
+
+# add a status line at bottom
+status = Tk.Label(win, text="", bd=1, relief="sunken", anchor="w")
+status.pack(side="bottom", fill="x")
+
 
 win.mainloop()
 #win.destroy()
