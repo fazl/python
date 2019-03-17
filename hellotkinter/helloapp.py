@@ -27,6 +27,12 @@ class App:
         print( msg )
         
     # Constructors are called __init__
+    # In this ctor all the widgets are local variables
+    # If we need to reference any of these after ctor 
+    # completes, would need to refer to them e.g. like:
+    #   self.frame
+    # which causes them to be object attributes..
+    #
     def __init__(self,ownerWnd):
         #python must be told which printMsg..
         self.printMsg("In App.ctor")  
@@ -40,13 +46,13 @@ class App:
         frame.pack()
         
         btnQuit = Tk.Button(frame, text="Quit", fg="red", command=frame.quit)
-        btnQuit.pack(side="left")
+        btnQuit.pack(side="left")  #quotes essential (in my installation)
 
         # Tip: Parentheses after method name in command argument prevent 
         # the method from being called when button clicked, somehow
         # but Python doesn't warn..
         btnHello = Tk.Button(frame, text="Print hi..", command=self.print)
-        btnHello.pack(side="right")
+        btnHello.pack(side="left")
         
 
 # root widget Tk is like a Swing JFrame, i.e. a
@@ -56,5 +62,6 @@ app = App(win)
 
 # Swing has pack() and setVisible()..
 win.mainloop()
+win.destroy()
 
 
