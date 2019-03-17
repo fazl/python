@@ -18,10 +18,11 @@ except ImportError:
 # Try wrapping stuff into a class
 class App:
     # Hmm python methods need explicit 'this' arg ?
+    # And overload somehow not available
     #
-    def printMsg(self):     
+    def print(self):     
         print( "howdie" )
-        
+    
     def printMsg(self, msg):     
         print( msg )
         
@@ -41,7 +42,10 @@ class App:
         btnQuit = Tk.Button(frame, text="Quit", fg="red", command=frame.quit)
         btnQuit.pack(side="left")
 
-        btnHello = Tk.Button(frame, text="Print hi..", command=self.printMsg("Oooh it tickles!"))
+        # Tip: Parentheses after method name in command argument prevent 
+        # the method from being called when button clicked, somehow
+        # but Python doesn't warn..
+        btnHello = Tk.Button(frame, text="Print hi..", command=self.print)
         btnHello.pack(side="right")
         
 
