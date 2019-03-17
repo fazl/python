@@ -15,29 +15,44 @@ try:
 except ImportError:
     import Tkinter as Tk  ## python2: tkinter 
 
-def printMsg():
-    print( "howdie" )
+# Try wrapping stuff into a class
+class App:
+    # Hmm python methods need explicit 'this' arg ?
+    #
+    def printMsg(self):     
+        print( "howdie" )
+        
+    def printMsg(self, msg):     
+        print( msg )
+        
+    # Constructors are called __init__
+    def __init__(self,ownerWnd):
+        #python must be told which printMsg..
+        self.printMsg("In App.ctor")  
+        
+        
 
 # root widget Tk is like a Swing JFrame, i.e. a
 # basic window with title and standard controls
-root = Tk.Tk()
+win = Tk.Tk()
+app = App(win)
 
 # Label whose parent is the root window
 # Can also show image instead of text..
-label = Tk.Label(root, text="Hello, Tkinter!")
+label = Tk.Label(win, text="Hello, Tkinter!")
 label.pack()
 
 #Add more controls, aiming to encapsulate into a class later
-frame = Tk.Frame(root)
+frame = Tk.Frame(win)
 frame.pack()
 
 btnQuit = Tk.Button(frame, text="Quit", fg="red", command=frame.quit)
 btnQuit.pack(side="left")
 
-btnHello = Tk.Button(frame, text="Print hi..", command=printMsg)
+btnHello = Tk.Button(frame, text="Print hi..", command=app.printMsg)
 btnHello.pack(side="right")
 
 # Swing has pack() and setVisible()..
-root.mainloop()
+win.mainloop()
 
 
