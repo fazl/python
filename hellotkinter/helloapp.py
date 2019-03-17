@@ -29,28 +29,26 @@ class App:
     def __init__(self,ownerWnd):
         #python must be told which printMsg..
         self.printMsg("In App.ctor")  
+
+        # Label whose parent is the root window
+        # Can also show image instead of text..
+        label = Tk.Label(ownerWnd, text="Hello, Tkinter!")
+        label.pack()
+
+        frame = Tk.Frame(ownerWnd)
+        frame.pack()
         
+        btnQuit = Tk.Button(frame, text="Quit", fg="red", command=frame.quit)
+        btnQuit.pack(side="left")
+
+        btnHello = Tk.Button(frame, text="Print hi..", command=self.printMsg("Oooh it tickles!"))
+        btnHello.pack(side="right")
         
 
 # root widget Tk is like a Swing JFrame, i.e. a
 # basic window with title and standard controls
 win = Tk.Tk()
 app = App(win)
-
-# Label whose parent is the root window
-# Can also show image instead of text..
-label = Tk.Label(win, text="Hello, Tkinter!")
-label.pack()
-
-#Add more controls, aiming to encapsulate into a class later
-frame = Tk.Frame(win)
-frame.pack()
-
-btnQuit = Tk.Button(frame, text="Quit", fg="red", command=frame.quit)
-btnQuit.pack(side="left")
-
-btnHello = Tk.Button(frame, text="Print hi..", command=app.printMsg)
-btnHello.pack(side="right")
 
 # Swing has pack() and setVisible()..
 win.mainloop()
