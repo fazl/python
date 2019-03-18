@@ -25,6 +25,13 @@ class MyDialog:
         self.printMsg("In MyDialog.ctor")  
        
         top = self.top = Tk.Toplevel(ownerWnd)
+        # Pressing Enter key now like pressing OK button
+        # Fixes Problem2
+        top.bind("<Return>", self.ok) 
+        # NB <Enter> means mouse enters widget area
+        # and <Return> means enter keypress
+        # <Enter> causes comedy at runtime !
+        
         Tk.Label(top, text="Value").pack()
         
         self.e = Tk.Entry(top)
@@ -32,15 +39,26 @@ class MyDialog:
         
         b = Tk.Button(top, text="OK", command=self.ok)
         b.pack(pady=5)
+
     
-    def ok(self):
-        print( "OK.. value is:", self.e.get(), "destroying top" )
+    # Ooh can have arg defaults; limited overloading
+    # Fixes Problem2
+    def ok(self,event=None):
+        print( "OK.. value is: '%s', destroying top" % self.e.get() )
         self.top.destroy()
 
 
 def startWorkflow():
     d = MyDialog(win)
-    d.top.focus_set()       
+    
+    # Give focus to the entry field so can type into it
+    # Fixes Problem2
+    d.e.focus_set()       
+
+    #Fixes Problem1
+    d.top.grab_set()
+
+
     #Problem 1: user can click main win and lose dialog
     #           or create multiple dialogs -> confusion
     #Problem 2: can't just type into edit field (Entry)
