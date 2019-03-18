@@ -24,15 +24,14 @@ class MyDialog:
     def __init__(self,ownerWnd):
         self.printMsg("In MyDialog.ctor")  
        
-        self.top = Tk.Toplevel(ownerWnd)
-        Tk.Label(self.top, text="Value").pack()
+        top = self.top = Tk.Toplevel(ownerWnd)
+        Tk.Label(top, text="Value").pack()
         
-        self.e = Tk.Entry(self.top)
+        self.e = Tk.Entry(top)
         self.e.pack(padx=5)
         
-        b = Tk.Button(self.top, text="OK", command=self.ok)
+        b = Tk.Button(top, text="OK", command=self.ok)
         b.pack(pady=5)
-        self.top.focus_set()
     
     def ok(self):
         print( "OK.. value is:", self.e.get(), "destroying top" )
@@ -41,6 +40,12 @@ class MyDialog:
 
 def startWorkflow():
     d = MyDialog(win)
+    d.top.focus_set()       
+    #Problem 1: user can click main win and lose dialog
+    #           or create multiple dialogs -> confusion
+    #Problem 2: can't just type into edit field (Entry)
+    #           user first must click the field
+    #           (and must click button not press enter)
     win.wait_window(d.top)  #Must know internals of dialog ?
     
 # script continues here
