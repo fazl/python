@@ -1,6 +1,6 @@
 @ECHO OFF
-REM Batch command to run a python program.
+REM Batch command to check a python program for ambiguous indentation
 REM Change PY_HOME to match your installation..
 @set PY_HOME=C:\Users\Fazl\AppData\Local\Programs\Python\Python37
 @set PY_EXE=%PY_HOME%\python.exe
-%PY_EXE% %1 %2 %3 %4 %5 %6 %7 %8 %9
+%PY% %PY_HOME%\lib\tabnanny.py -v %1
