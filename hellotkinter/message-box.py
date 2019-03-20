@@ -21,7 +21,8 @@ except ImportError:
 # basic window with title and standard controls
 # won't accept args width=200, height=200 
 win = Tk.Tk() 
-frame = Tk.Frame( win, width=200, height=200 )
+label = Tk.Label( win, text="Try closing to see dialog" )
+
 
 # click event handler
 def confirmExit():
@@ -29,6 +30,7 @@ def confirmExit():
         win.destroy()
 
 win.protocol("WM_DELETE_WINDOW", confirmExit)
+label.pack()
 win.mainloop()
 #win.destroy()
 
