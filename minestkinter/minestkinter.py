@@ -5,22 +5,71 @@ try:
 except ImportError:
     import Tkinter as Tk  ## python2: tkinter 
 
+class TileState():
+    HIDDEN, MARKED, BOMB, MAYBE = range(0, 4)
+    labels={
+        HIDDEN:"   ",
+        MARKED:" X ",
+        BOMB:" * ",
+        MAYBE:" ? "
+    }
+
 class Tile(Tk.Button):
     def __init__(self, master, col, row, label):
         Tk.Button.__init__(self, master, text=label)
         self.bind("<1>", self.tileClickLeft)
+        self.bind("<3>", self.tileClickRight)
         self.col = col
         self.row = row
         self.isOpen = False
         self.hasMine = False
         self.label = label
-        self.backupLabel = None
+        # self.detectedMines = 0
+        self.state = TileState.HIDDEN
+    def noOp(self, event):
+        zzxzz = 0 # empty body not possible, right ?
+
     def tileClickLeft(self, event):
-        str = "Button at col=%d, row=%d hasMine=%s" \
+        str = "L-clk: Tile at col=%d, row=%d hasMine=%s" \
             % (self.col, self.row, self.hasMine)
         status.config(text=str)
         print(str)
 
+    # Cycle the label "" -> X -> ? -> ""
+    # Disable left clicks for X and ? states
+    # to protect against accidentally triggering mine
+    def tileClickRight(self, event):
+        transition = ""
+        if self.state == TileState.HIDDEN:
+            self.state = TileState.MARKED
+            self.bind("<1>", self.noOp)
+            self.config(state = "disabled")
+            transition = "state->MARKED"
+        elif self.state == TileState.MARKED:
+            self.state = TileState.MAYBE
+            self.bind("<1>", self.noOp)
+            self.config(state = "disabled")
+            transition = "state->MAYBE"
+        elif self.state == TileState.MAYBE:
+            self.state = TileState.HIDDEN
+            transition = "state->HIDDEN"
+            self.bind("<1>", self.tileClickLeft)
+            self.config(state = "normal")
+        else:
+            raise AssertionError("row=%d,col=%d, unexpected state %s"%(self.row, self.col, self.state))
+
+        str = "R-clk: Tile at col=%d, row=%d hasMine=%s (%s)" \
+            % (self.col, self.row, self.hasMine, transition)
+        status.config(text=str)
+        print(str)
+
+        #Update button label to new state
+        self.config(text=TileState.labels[self.state])
+
+    def getState(self):
+        return self.state
+    def setState(self,state):
+        self.state = state
 
 
 
@@ -93,13 +142,11 @@ def mouse2grid(xmouse, ymouse):
 def newGame():
     countMarked = 0
     countOpened = 0
-    tiles = []
+    tiles = []          #arraylist of rows
     for r in range(0, GRID_ROWS):
-        tileRow = []
+        tileRow = []    #arraylist of tiles
         for c in range(0,GRID_COLS):
             b = Tile(frame, c, r, "   ")
-            # b.bind("<1>", tileClickLeft())
-            # b = Tile(frame, col=c, row=r, label = str(r*GRID_COLS + c))
             tileRow.append(b)
             b.grid(row=r, column=c, sticky="ewns")
         tiles.append(tileRow)
@@ -112,6 +159,9 @@ def newGame():
 # an image from disk using PhotoImage constructor.
 toolbar = Tk.Frame( win )
 b = Tk.Button(toolbar, text="new game", command=handleNewGame)
+b.pack(side="left", padx=2, pady=2)
+
+b = Tk.Button(toolbar, text="TODO use images!", command=handleQuit)
 b.pack(side="left", padx=2, pady=2)
 
 b = Tk.Button(toolbar, text="quit", command=handleQuit)
@@ -131,6 +181,8 @@ toolbar.pack(side="top", fill="x")
 # .. and lots of other standard keys..
 #
 # Can s/Button/ButtonPress/ or s/Button-//
+# TODO remove mouse handling for frame unless needed ?
+#
 frame = Tk.Frame(win, width=TILE_SIZE * GRID_COLS, height=TILE_SIZE * GRID_ROWS)
 frame.bind("<1>", onClick)
 frame.bind("<3>", onRightClick)
