@@ -5,37 +5,56 @@ try:
 except ImportError:
     import Tkinter as Tk  ## python2: tkinter 
 
+class Tile(Tk.Button):
+    def __init__(self, master, col, row, label):
+        Tk.Button.__init__(self, master, text=label)
+        self.bind("<1>", self.tileClickLeft)
+        self.col = col
+        self.row = row
+        self.isOpen = False
+        self.hasMine = False
+        self.label = label
+        self.backupLabel = None
+    def tileClickLeft(self, event):
+        str = "Button at col=%d, row=%d hasMine=%s" \
+            % (self.col, self.row, self.hasMine)
+        status.config(text=str)
+        print(str)
+
+
+
 
 # Seems PEP8 conventions are checked by PyCharm
 # Wants two blank lines after functions.
 
 # menu handlers
-def handleNewFile():
-    status.config(text="clicked File|New")
+#
+def handleNewGame():
+    str="clicked new game"
+    status.config(text=str)
+    print (str)
+    newGame()
 
 
-def handleOpenFile():
-    status.config(text="clicked File|Open")
-
-
-def handleExit():
-    status.config(text="So long..")
-    print("clicked menu File|Exit")
+def handleQuit():
+    str="clicked quit"
+    status.config(text=str)
+    print (str)
     win.destroy()
-
 
 def handleHelpAbout():
     status.config(text="clicked Help|About")
 
-
+# CONSTANTS
 # Seems python has no const or final keyword.
 # Just remember never to assign to an UPPERCASE variable
-# (And hope you don't redeclare one you already defined..)
+# To avoid declaring one you already defined, maybe put
+# all constants definitions in one place.
 #
 TILE_SIZE = 20  # pixels
 GRID_ROWS = 15
 GRID_COLS = GRID_ROWS
-
+firstTime = True
 # basic window with title and standard controls
 win = Tk.Tk()
 
@@ -68,8 +87,38 @@ def mouse2grid(xmouse, ymouse):
     return (gridX, gridY)
 
 
-# Can we do this directly on a window ? Ans: NO.
+# Fill the middle frame with a grid of squares
+# Some of them have a mine in them
 #
+def newGame():
+    countMarked = 0
+    countOpened = 0
+    tiles = []
+    for r in range(0, GRID_ROWS):
+        tileRow = []
+        for c in range(0,GRID_COLS):
+            b = Tile(frame, c, r, "   ")
+            # b.bind("<1>", tileClickLeft())
+            # b = Tile(frame, col=c, row=r, label = str(r*GRID_COLS + c))
+            tileRow.append(b)
+            b.grid(row=r, column=c, sticky="ewns")
+        tiles.append(tileRow)
+
+
+# I guess main starts here..
+
+# just some buttons in a frame parked at the top, for a toolbar
+# instead of text=".." can use image= for which you can load
+# an image from disk using PhotoImage constructor.
+toolbar = Tk.Frame( win )
+b = Tk.Button(toolbar, text="new game", command=handleNewGame)
+b.pack(side="left", padx=2, pady=2)
+
+b = Tk.Button(toolbar, text="quit", command=handleQuit)
+b.pack(side="right", padx=2, pady=2)
+
+toolbar.pack(side="top", fill="x")
+
 # <Button-1> = left click  (or <ButtonPress-1> or just <1>)
 # <Button-2> = middle click
 # <Button-3> = right click
@@ -82,16 +131,17 @@ def mouse2grid(xmouse, ymouse):
 # .. and lots of other standard keys..
 #
 # Can s/Button/ButtonPress/ or s/Button-//
-#
-
 frame = Tk.Frame(win, width=TILE_SIZE * GRID_COLS, height=TILE_SIZE * GRID_ROWS)
 frame.bind("<1>", onClick)
 frame.bind("<3>", onRightClick)
-frame.bind("<B1-Motion>", onDrag)  # Hmm this is cool
+# frame.bind("<B1-Motion>", onDrag)  # Hmm this is cool
 frame.pack()
+
+#
 
 # add a status line at bottom
 status = Tk.Label(win, text="", bd=1, relief="sunken", anchor="w")
 status.pack(side="bottom", fill="x")
+newGame()
 
 win.mainloop()
