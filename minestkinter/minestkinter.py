@@ -5,13 +5,19 @@ try:
 except ImportError:
     import Tkinter as Tk  ## python2: tkinter 
 
+TEXT_HIDDEN = "     "
+TEXT_MARKED = "  x  "
+TEXT_BOMB   = "  *  "
+TEXT_MAYBE  = "  ?  "
+
+
 class TileState():
     HIDDEN, MARKED, BOMB, MAYBE = range(0, 4)
     labels={
-        HIDDEN:"   ",
-        MARKED:" X ",
-        BOMB:" * ",
-        MAYBE:" ? "
+        BOMB   : TEXT_BOMB,
+        HIDDEN : TEXT_HIDDEN,
+        MARKED : TEXT_MARKED,
+        MAYBE  : TEXT_MAYBE
     }
 
 class Tile(Tk.Button):
@@ -146,7 +152,7 @@ def newGame():
     for r in range(0, GRID_ROWS):
         tileRow = []    #arraylist of tiles
         for c in range(0,GRID_COLS):
-            b = Tile(frame, c, r, "   ")
+            b = Tile(frame, c, r, TEXT_HIDDEN)
             tileRow.append(b)
             b.grid(row=r, column=c, sticky="ewns")
         tiles.append(tileRow)
