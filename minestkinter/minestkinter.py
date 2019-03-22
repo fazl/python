@@ -64,7 +64,7 @@ class Tile(Tk.Button):
         zzxzz = 0 # empty body not possible, right ?
 
     def tileClickLeft(self, event):
-        log("L-clk: " + self.__str__())
+        # log("L-clk: " + self.__str__())
         if self.hasMine :
             self.userLost()
         else :
@@ -130,16 +130,10 @@ class Tile(Tk.Button):
             self.config(state = "normal")
         else:
             raise AssertionError("row=%d,col=%d, unexpected state %s"%(self.row, self.col, self.state))
-
-        log("R-clk: %s (%s)" % (self.__str__(), transition))
+        #log("R-clk: %s (%s)" % (self.__str__(), transition))
 
         #Update button label to new state
         self.config(text=TileState.labels[self.state])
-
-    def getState(self):
-        return self.state
-    def setState(self,state):
-        self.state = state
 
 
 
@@ -264,8 +258,8 @@ def getNeighbourTiles( tileRows : list, tile : Tile ) -> list :
 # Some of them have a mine in them
 #
 def newGame():
-    countMarked = 0
-    countOpened = 0
+    markedCount = 0
+    openedCount = 0
     tiles.clear()
     for r in range(GRID_ROWS):
         tileRow = []    #arraylist of tiles
