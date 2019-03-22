@@ -4,6 +4,7 @@ try:
     import tkinter as Tk  ## python3: tkinter 
 except ImportError:
     import Tkinter as Tk  ## python2: tkinter 
+import random
 
 TEXT_HIDDEN = "     "
 TEXT_MARKED = "  x  "
@@ -32,10 +33,16 @@ class Tile(Tk.Button):
         self.label = label
         # self.detectedMines = 0
         self.state = TileState.HIDDEN
+
+    def __str__(self):
+        return "Tile at col=%d, row=%d hasMine=%s" \
+            % (self.col, self.row, self.hasMine)
+
     def noOp(self, event):
         zzxzz = 0 # empty body not possible, right ?
 
     def tileClickLeft(self, event):
+        #TODO simplify using __str__
         str = "L-clk: Tile at col=%d, row=%d hasMine=%s" \
             % (self.col, self.row, self.hasMine)
         status.config(text=str)
@@ -136,10 +143,30 @@ def onDrag(event):
 
 # x <--> column
 # y <--> row
-def mouse2grid(xmouse, ymouse):
+def mouse2grid(xmouse, ymouse) :
     gridX = int(xmouse / TILE_SIZE)
     gridY = int(ymouse / TILE_SIZE)
     return (gridX, gridY)
+
+# Scatter mines randomly
+# Example of typed arguments and return value in a function
+def placeRandomMines(nMines : int, tileRows : list, bombIndexes : list ) -> int:
+    N = GRID_COLS*GRID_ROWS
+    if N < nMines :
+        raise ValueError("Can't place %d mines in %d grid tiles" % (nMines,N ))
+    origMines = nMines
+
+    bombIndexes.clear()
+    for attempt in range(1, 100):
+        print("Lay mines iter: %d (outstanding %d mines)..  ", attempt, nMines)
+        rCol, rRow = random.randint(0,GRID_COLS-1), random.randint(0,GRID_ROWS-1)
+        tileRow = tileRows[rRow]
+        tile = tileRow[rCol]
+        print( "Chosen random tile: %s" % tile)
+        # TODO continue work ..
+    return nMines
+
+
 
 
 # Fill the middle frame with a grid of squares
@@ -156,7 +183,8 @@ def newGame():
             tileRow.append(b)
             b.grid(row=r, column=c, sticky="ewns")
         tiles.append(tileRow)
-
+    bombIndices = []
+    mineCount = placeRandomMines( 15, tiles, bombIndices )
 
 # I guess main starts here..
 
