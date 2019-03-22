@@ -12,6 +12,11 @@ import random
 # To avoid declaring one you already defined, maybe put
 # all constants definitions in one place.
 #
+COLOR_DEAD   = "red"
+COLOR_HIDDEN = "darkgrey"
+COLOR_MARKED = "black"
+COLOR_OPEN   = "lightgrey"
+DEATH_CROSS = '\u2620'      #skull & crossbones symbol
 GRID_ROWS = 15
 GRID_COLS = GRID_ROWS
 TEXT_HIDDEN = "     "
@@ -19,7 +24,9 @@ TEXT_MARKED = "  x  "
 TEXT_BOMB   = "  *  "
 TEXT_MAYBE  = "  ?  "
 TILE_SIZE = 20  # pixels
+#TODO could display running totals in status line ??
 openedCount : int  = 0
+markedCount : int  = 0
 tiles = []  # arraylist of rows, module global aids debugging
 
 
@@ -34,7 +41,7 @@ class TileState():
 
 class Tile(Tk.Button):
     def __init__(self, master, col, row, label):
-        Tk.Button.__init__(self, master, text=label)
+        Tk.Button.__init__(self, master, text=label, bg=COLOR_HIDDEN, disabledforeground=COLOR_MARKED)
         self.bind("<1>", self.tileClickLeft)
         self.bind("<3>", self.tileClickRight)
         self.col = col
@@ -44,6 +51,10 @@ class Tile(Tk.Button):
         self.label = label
         self.detectedMines = 0
         self.state = TileState.HIDDEN
+
+    def setLabel(self, lbl) :
+        self.config(text=lbl)
+        self.label = lbl
 
     def __str__(self):
         return "Tile at x=%d, y=%d, live=%s, live ngbs=%d" \
@@ -55,41 +66,63 @@ class Tile(Tk.Button):
     def tileClickLeft(self, event):
         log("L-clk: " + self.__str__())
         if self.hasMine :
-            #TODO
-            userLost()
+            self.userLost()
         else :
             if self.detectedMines == 0:
-                #TODO
-                openCluster(self)
+                self.openCluster()
             else :
                 self.open() #also sets label
 
+    def userLost(self):
+        log("You're DEAD %s" % self)
+        self.setLabel(DEATH_CROSS)
+        self.config(fg=COLOR_DEAD, font="-weight bold" )
+
+    # 1) User left-clicked empty tile, or
+    # 2) Called as part of clearing a cluster
+    # Set label to nr detected mines
+    # Disable button so it no longer reacts to clicks
+    # Increment cleared mine count
     def open(self):
         if not self.isOpen :
-            #TODO ??also change button color to 'cleared'??
             self.isOpen = True
-            self.label = str(self.detectedMines)
-            self.config(text = self.label)
-
+            self.setLabel(str(self.detectedMines) if 0<self.detectedMines else "  ")
+            self.config(bg=COLOR_OPEN)
+            self.bind("<1>", self.noOp)
+            self.bind("<3>", self.noOp)
+            self.config(state = "disabled")
             #without this, the module-global variable not seen here!
             global openedCount
             openedCount += 1
+            checkGameWon(self)
+
+    def openCluster(self):
+        self.open()
+        for ngbTile in getNeighbourTiles(tiles, self):
+            if not ngbTile.isOpen and not ngbTile.hasMine:
+                ngbTile.open()
+                if ngbTile.detectedMines == 0 :
+                    ngbTile.openCluster() #NB recursion
 
     # Cycle the label "" -> X -> ? -> ""
     # Disable left clicks for X and ? states
     # to protect against accidentally triggering mine
     def tileClickRight(self, event):
         transition = ""
+        global markedCount
         if self.state == TileState.HIDDEN:
             self.state = TileState.MARKED
             self.bind("<1>", self.noOp)
             self.config(state = "disabled")
             transition = "state->MARKED"
+            markedCount += 1
+            checkGameWon(self)
         elif self.state == TileState.MARKED:
             self.state = TileState.MAYBE
             self.bind("<1>", self.noOp)
             self.config(state = "disabled")
             transition = "state->MAYBE"
+            markedCount -= 1
         elif self.state == TileState.MAYBE:
             self.state = TileState.HIDDEN
             transition = "state->HIDDEN"
@@ -131,9 +164,6 @@ def handleQuit():
 def handleHelpAbout():
     log("clicked Help|About")
 
-def userLost():
-    log("You lost!")
-
 # basic window with title and standard controls
 win = Tk.Tk()
 
@@ -162,8 +192,10 @@ def mouse2grid(xmouse, ymouse) :
     gridY = int(ymouse / TILE_SIZE)
     return (gridX, gridY)
 
-def openCluster( tile : Tile ):
-    log ("TODO openCluster around tile: %s" % tile)
+def checkGameWon( tile : Tile ):
+    if GRID_COLS*GRID_ROWS <= openedCount + markedCount :
+        print( "TODO congrats dialog needed here")
+        log("You won! Congratulations.")
 
 # Scatter mines randomly
 # Example of typed arguments and return value in a function
@@ -199,7 +231,6 @@ def placeRandomMines(nMines : int, tileRows : list, mineIndexes : list) -> int:
                 break
         else :
             print("\nAlready occupied: (col:%d, row:%d)\n", (rCol, rRow))
-
     return nMines
 
 def getNeighbourTiles( tileRows : list, tile : Tile ) -> list :
