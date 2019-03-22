@@ -6,10 +6,21 @@ except ImportError:
     import Tkinter as Tk  ## python2: tkinter 
 import random
 
+# GLOBALS AND CONSTANTS
+# Seems python has no const or final keyword.
+# Just remember never to assign to an UPPERCASE variable
+# To avoid declaring one you already defined, maybe put
+# all constants definitions in one place.
+#
+GRID_ROWS = 15
+GRID_COLS = GRID_ROWS
 TEXT_HIDDEN = "     "
 TEXT_MARKED = "  x  "
 TEXT_BOMB   = "  *  "
 TEXT_MAYBE  = "  ?  "
+TILE_SIZE = 20  # pixels
+openedCount : int  = 0
+tiles = []  # arraylist of rows, module global aids debugging
 
 
 class TileState():
@@ -42,9 +53,27 @@ class Tile(Tk.Button):
         zzxzz = 0 # empty body not possible, right ?
 
     def tileClickLeft(self, event):
-        str = "L-clk: " + self.__str__()
-        status.config(text=str)
-        print(str)
+        log("L-clk: " + self.__str__())
+        if self.hasMine :
+            #TODO
+            userLost()
+        else :
+            if self.detectedMines == 0:
+                #TODO
+                openCluster(self)
+            else :
+                self.open() #also sets label
+
+    def open(self):
+        if not self.isOpen :
+            #TODO ??also change button color to 'cleared'??
+            self.isOpen = True
+            self.label = str(self.detectedMines)
+            self.config(text = self.label)
+
+            #without this, the module-global variable not seen here!
+            global openedCount
+            openedCount += 1
 
     # Cycle the label "" -> X -> ? -> ""
     # Disable left clicks for X and ? states
@@ -69,9 +98,7 @@ class Tile(Tk.Button):
         else:
             raise AssertionError("row=%d,col=%d, unexpected state %s"%(self.row, self.col, self.state))
 
-        str = "R-clk: %s (%s)" % (self.__str__(), transition)
-        status.config(text=str)
-        print(str)
+        log("R-clk: %s (%s)" % (self.__str__(), transition))
 
         #Update button label to new state
         self.config(text=TileState.labels[self.state])
@@ -86,59 +113,47 @@ class Tile(Tk.Button):
 # Seems PEP8 conventions are checked by PyCharm
 # Wants two blank lines after functions.
 
+def log(msg:str):
+    status.config(text=msg)
+    print (msg)
+
 # menu handlers
 #
 def handleNewGame():
-    str="clicked new game"
-    status.config(text=str)
-    print (str)
+    log("clicked new game")
     newGame()
 
 
 def handleQuit():
-    str="clicked quit"
-    status.config(text=str)
-    print (str)
+    log("clicked quit")
     win.destroy()
 
 def handleHelpAbout():
-    status.config(text="clicked Help|About")
+    log("clicked Help|About")
 
-# CONSTANTS
-# Seems python has no const or final keyword.
-# Just remember never to assign to an UPPERCASE variable
-# To avoid declaring one you already defined, maybe put
-# all constants definitions in one place.
-#
-TILE_SIZE = 20  # pixels
-GRID_ROWS = 15
-GRID_COLS = GRID_ROWS
-firstTime = True
-tiles = []  # arraylist of rows, module global aids debugging
+def userLost():
+    log("You lost!")
 
 # basic window with title and standard controls
 win = Tk.Tk()
 
 
-# click event handler
+# click event handlers
 def expand(x, y, r, c):
     return "mouse(%d,%d)==grid(%d,%d)" % (x, y, r, c)
 
 
 def onClick(event):
     (row, col) = mouse2grid(event.x, event.y)
-    str = "Clicked at %s" % expand(event.x, event.y, row, col)
-    status.config(text=str)
-    print(str)
+    log("Clicked at %s" % expand(event.x, event.y, row, col))
 
 
 def onRightClick(event):
-    print("Right-clicked at", event.x, event.y)
+    log("Right-clicked at x=%d,y=%d" % (event.x, event.y))
 
 
 def onDrag(event):
-    print("Dragged to ", event.x, event.y)
-
+    log("Dragged to x=%d,y=%d" % (event.x, event.y))
 
 # x <--> column
 # y <--> row
@@ -146,6 +161,9 @@ def mouse2grid(xmouse, ymouse) :
     gridX = int(xmouse / TILE_SIZE)
     gridY = int(ymouse / TILE_SIZE)
     return (gridX, gridY)
+
+def openCluster( tile : Tile ):
+    log ("TODO openCluster around tile: %s" % tile)
 
 # Scatter mines randomly
 # Example of typed arguments and return value in a function
