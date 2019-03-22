@@ -31,20 +31,18 @@ class Tile(Tk.Button):
         self.isOpen = False
         self.hasMine = False
         self.label = label
-        # self.detectedMines = 0
+        self.detectedMines = 0
         self.state = TileState.HIDDEN
 
     def __str__(self):
-        return "Tile at col=%d, row=%d hasMine=%s" \
-            % (self.col, self.row, self.hasMine)
+        return "Tile at x=%d, y=%d, live=%s, live ngbs=%d" \
+            % (self.col, self.row, self.hasMine, self.detectedMines)
 
     def noOp(self, event):
         zzxzz = 0 # empty body not possible, right ?
 
     def tileClickLeft(self, event):
-        #TODO simplify using __str__
-        str = "L-clk: Tile at col=%d, row=%d hasMine=%s" \
-            % (self.col, self.row, self.hasMine)
+        str = "L-clk: " + self.__str__()
         status.config(text=str)
         print(str)
 
@@ -71,8 +69,7 @@ class Tile(Tk.Button):
         else:
             raise AssertionError("row=%d,col=%d, unexpected state %s"%(self.row, self.col, self.state))
 
-        str = "R-clk: Tile at col=%d, row=%d hasMine=%s (%s)" \
-            % (self.col, self.row, self.hasMine, transition)
+        str = "R-clk: %s (%s)" % (self.__str__(), transition)
         status.config(text=str)
         print(str)
 
@@ -117,6 +114,8 @@ TILE_SIZE = 20  # pixels
 GRID_ROWS = 15
 GRID_COLS = GRID_ROWS
 firstTime = True
+tiles = []  # arraylist of rows, module global aids debugging
+
 # basic window with title and standard controls
 win = Tk.Tk()
 
@@ -150,23 +149,66 @@ def mouse2grid(xmouse, ymouse) :
 
 # Scatter mines randomly
 # Example of typed arguments and return value in a function
-def placeRandomMines(nMines : int, tileRows : list, bombIndexes : list ) -> int:
+def placeRandomMines(nMines : int, tileRows : list, mineIndexes : list) -> int:
     N = GRID_COLS*GRID_ROWS
     if N < nMines :
         raise ValueError("Can't place %d mines in %d grid tiles" % (nMines,N ))
     origMines = nMines
 
-    bombIndexes.clear()
+    mineIndexes.clear()
     for attempt in range(1, 100):
-        print("Lay mines iter: %d (outstanding %d mines)..  ", attempt, nMines)
+        print("Lay mines iter: %d (outstanding %d mines)..  " % (attempt, nMines))
         rCol, rRow = random.randint(0,GRID_COLS-1), random.randint(0,GRID_ROWS-1)
         tileRow = tileRows[rRow]
         tile = tileRow[rCol]
         print( "Chosen random tile: %s" % tile)
-        # TODO continue work ..
+
+        if not tile.hasMine :
+            tile.hasMine = True
+            mineIndexes.append(tile)
+
+            ngbList = getNeighbourTiles(tileRows, tile)
+            for ngb in ngbList :
+                dm = ngb.detectedMines
+                ngb.detectedMines += 1
+                if dm+1 != ngb.detectedMines :
+                    raise ValueError("failed to increment detected mines!")
+
+            print("Placed mine at (col:%d, row:%d)" % (rCol, rRow))
+            nMines -= 1
+            if nMines <= 0 :
+                print("Success: %d mines laid in %d iterations" % (origMines, attempt))
+                break
+        else :
+            print("\nAlready occupied: (col:%d, row:%d)\n", (rCol, rRow))
+
     return nMines
 
-
+def getNeighbourTiles( tileRows : list, tile : Tile ) -> list :
+    print("Collect ngbs of Tile:", tile)
+    ngbs = []
+    tRow, tCol = tile.row, tile.col
+    # range has inclusive lower and exclusive upper bounds,
+    # unlike randomint :(
+    for dRow in range(-1,2):
+        ngbRow = tRow+dRow
+        if ngbRow not in range(GRID_ROWS): continue
+        tileRow = tileRows[ngbRow]
+        for dCol in range(-1,2):
+            ngbCol = tCol + dCol
+            if ngbCol not in range(GRID_COLS): continue
+            ngbTile : Tile = tileRow[ngbCol]
+            if ngbTile.row != ngbRow and ngbTile.col != ngbCol :
+                raise ValueError(
+                    "Misplaced ngb at r:%d,c:%d has row %d, col %d"
+                    % (ngbRow, ngbCol,ngbTile.row, ngbTile.col)
+                )
+            if ngbTile != tile :
+                print("\tNgb (dRow %d, dCol %d): %s" % (dRow, dCol, ngbTile)  )
+                ngbs.append(ngbTile)
+            else:
+                print("\tSelf (dRow %d, dCol %d): %s" % (dRow, dCol, ngbTile)  )
+    return ngbs
 
 
 # Fill the middle frame with a grid of squares
@@ -175,16 +217,17 @@ def placeRandomMines(nMines : int, tileRows : list, bombIndexes : list ) -> int:
 def newGame():
     countMarked = 0
     countOpened = 0
-    tiles = []          #arraylist of rows
-    for r in range(0, GRID_ROWS):
+    tiles.clear()
+    for r in range(GRID_ROWS):
         tileRow = []    #arraylist of tiles
-        for c in range(0,GRID_COLS):
+        for c in range(GRID_COLS):
             b = Tile(frame, c, r, TEXT_HIDDEN)
             tileRow.append(b)
             b.grid(row=r, column=c, sticky="ewns")
         tiles.append(tileRow)
-    bombIndices = []
-    mineCount = placeRandomMines( 15, tiles, bombIndices )
+    mineIndices = []
+    # TODO dialog to configure game ?
+    mineCount = placeRandomMines( 15, tiles, mineIndices )
 
 # I guess main starts here..
 
