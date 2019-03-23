@@ -180,14 +180,62 @@ class Tile(Tk.Button):
 # Seems PEP8 conventions are checked by PyCharm
 # Wants two blank lines after functions.
 
+def confirmExit():
+    if messagebox.askokcancel("Quit", "Really quit?"):
+        win.destroy()
+
+
+def getNeighbourTiles( tileRows : list, tile : Tile ) -> list :
+    trace("Collect ngbs of Tile: %s" % tile)
+    ngbs = []
+    tRow, tCol = tile.row, tile.col
+    # range has inclusive lower and exclusive upper bounds,
+    # unlike randomint :(
+    for dRow in range(-1,2):
+        ngbRow = tRow+dRow
+        if ngbRow not in range(GRID_ROWS): continue
+        tileRow = tileRows[ngbRow]
+        for dCol in range(-1,2):
+            ngbCol = tCol + dCol
+            if ngbCol not in range(GRID_COLS): continue
+            ngbTile : Tile = tileRow[ngbCol]
+            if ngbTile.row != ngbRow and ngbTile.col != ngbCol :
+                raise ValueError(
+                    "Misplaced ngb at r:%d,c:%d has row %d, col %d"
+                    % (ngbRow, ngbCol,ngbTile.row, ngbTile.col)
+                )
+            if ngbTile != tile :
+                trace("\tNgb (dRow %d, dCol %d): %s" % (dRow, dCol, ngbTile)  )
+                ngbs.append(ngbTile)
+            else:
+                trace("\tSelf (dRow %d, dCol %d): %s" % (dRow, dCol, ngbTile)  )
+    return ngbs
+
 def log(msg:str):
     statusLine.config(text=msg)
     print (msg)
 
-#Activate tracing : False -> True
-def trace(msg:str):
-    if(False): print (msg)
+def logMinesRemaining():
+    log("Mines left: %d\t Cleared: %d" % (G.mineCount - G.markedCount, G.clearedCount))
 
+# Fill the middle frame with a grid of squares
+# Then ranomly place a mine under some of them
+#
+def newGame():
+    G.markedCount = 0
+    G.clearedCount = 0
+    G.tiles.clear()
+    for r in range(GRID_ROWS):
+        tileRow = []
+        for c in range(GRID_COLS):
+            tile = Tile(G.frame, c, r, TEXT_HIDDEN)
+            tileRow.append(tile)
+            tile.grid(row=r, column=c, sticky="ewns") #ewns = fill grid cell
+        G.tiles.append(tileRow)
+    mineIndices = []
+    # TODO dialog to configure game ?
+    placeMinesRandomly(15, G.tiles, mineIndices)
+    logMinesRemaining()
 
 # Example of typed arguments and return value in a function
 #
@@ -225,65 +273,22 @@ def placeMinesRandomly(nMines : int, tileRowArray : list, mineIndexes : list) ->
             print("\nAlready occupied: (col:%d, row:%d)\n", (rCol, rRow))
     return nMines
 
-def getNeighbourTiles( tileRows : list, tile : Tile ) -> list :
-    trace("Collect ngbs of Tile: %s" % tile)
-    ngbs = []
-    tRow, tCol = tile.row, tile.col
-    # range has inclusive lower and exclusive upper bounds,
-    # unlike randomint :(
-    for dRow in range(-1,2):
-        ngbRow = tRow+dRow
-        if ngbRow not in range(GRID_ROWS): continue
-        tileRow = tileRows[ngbRow]
-        for dCol in range(-1,2):
-            ngbCol = tCol + dCol
-            if ngbCol not in range(GRID_COLS): continue
-            ngbTile : Tile = tileRow[ngbCol]
-            if ngbTile.row != ngbRow and ngbTile.col != ngbCol :
-                raise ValueError(
-                    "Misplaced ngb at r:%d,c:%d has row %d, col %d"
-                    % (ngbRow, ngbCol,ngbTile.row, ngbTile.col)
-                )
-            if ngbTile != tile :
-                trace("\tNgb (dRow %d, dCol %d): %s" % (dRow, dCol, ngbTile)  )
-                ngbs.append(ngbTile)
-            else:
-                trace("\tSelf (dRow %d, dCol %d): %s" % (dRow, dCol, ngbTile)  )
-    return ngbs
-
 
 def quit():
     log("clicked quit")
     win.destroy()
 
-# Fill the middle frame with a grid of squares
-# Then ranomly place a mine under some of them
-#
-def newGame():
-    G.markedCount = 0
-    G.clearedCount = 0
-    G.tiles.clear()
-    for r in range(GRID_ROWS):
-        tileRow = []
-        for c in range(GRID_COLS):
-            tile = Tile(G.frame, c, r, TEXT_HIDDEN)
-            tileRow.append(tile)
-            tile.grid(row=r, column=c, sticky="ewns") #ewns = fill grid cell
-        G.tiles.append(tileRow)
-    mineIndices = []
-    # TODO dialog to configure game ?
-    placeMinesRandomly(15, G.tiles, mineIndices)
-    logMinesRemaining()
+#Activate tracing : False -> True
+def trace(msg:str):
+    if(False): print (msg)
 
-def logMinesRemaining():
-    msg = "Cleared: %d\t Mines left: %d" % (G.clearedCount, G.mineCount - G.markedCount)
-    log(msg)
+
 # Program starts here
 # ====================
 
 # basic window with title and standard controls
 win = Tk.Tk()
-
+win.protocol("WM_DELETE_WINDOW", confirmExit)
 # Toolbar = some buttons in a frame parked at the top
 # Instead of text=".." can use image= for which you can load
 # an image from disk using PhotoImage constructor.
