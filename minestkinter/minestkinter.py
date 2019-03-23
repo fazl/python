@@ -2,8 +2,10 @@
 # Hey, coding in pycharm is more fun than in text editor!
 try:
     import tkinter as Tk  ## python3: tkinter 
+    import tkinter.messagebox as messagebox    # stackoverflow.com/a/38181986
 except ImportError:
-    import Tkinter as Tk  ## python2: tkinter 
+    import Tkinter as Tk  ## python2: tkinter
+    import tkMessageBox as messagebox
 import random
 
 ## SUMMARY OF IDEAS FOR IMPROVEMENTS, EASY TO HARD
@@ -21,7 +23,6 @@ import random
 # To help prevent redeclaring one you already defined, maybe put
 # all constants definitions in one place.
 #
-COLOR_DEAD   = "red"
 COLOR_HIDDEN = "darkgrey"
 COLOR_MARKED = "black"
 COLOR_OPEN   = "lightgrey"
@@ -86,7 +87,13 @@ class Tile(Tk.Button):
     def userLost(self):
         log("You're DEAD %s" % self)
         self.setLabel(DEATH_CROSS)
-        self.config(fg=COLOR_DEAD, font="-weight bold" )
+        self.config(font="-weight bold" )
+        self.bind("<1>", self.noOp)
+        self.bind("<3>", self.noOp)
+        self.config(state="disabled")
+
+        if messagebox.askokcancel("KaBOOM! You just died..", "Start new game?"):
+            newGame()
 
     # 1) User left-clicked empty tile, or
     # 2) Called as part of clearing a cluster
