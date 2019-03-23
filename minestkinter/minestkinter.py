@@ -9,8 +9,8 @@ except ImportError:
 import random
 
 ## SUMMARY OF IDEAS FOR IMPROVEMENTS, EASY TO HARD
-#  TODO dialogs on winning / losing should be trivial
-#  TODO could display running totals in status line ??
+#  DONE dialogs on winning / losing should be trivial
+#  DONE could display running totals in status line ??
 #  TODO dialog to configure game ?
 #  TODO add keyboard navigation should be straightforward
 #  TODO use images in buttons
@@ -23,6 +23,17 @@ import random
 # To help prevent redeclaring one you already defined, maybe put
 # all constants definitions in one place.
 #
+# A very annoying feature of python is that it allows code
+# in nested scopes to inherit names from outer scopes but
+# only for reading, not for writing. Inconsistency. Don't like.
+# If you suddenly need to also write to it, python creates
+# a new local variable.  At least it has the decency to
+# puke an error for the earlier reads.  Sigh.
+#
+# So these constants DON'T need to be accessed via 'global'
+# but variables that must be mutated from nested scopes
+# do.
+#
 COLOR_HIDDEN = "darkgrey"
 COLOR_MARKED = "black"
 COLOR_OPEN   = "lightgrey"
@@ -34,11 +45,15 @@ TEXT_MARKED = "  x  "
 TEXT_BOMB   = "  *  "
 TEXT_MAYBE  = "  ?  "
 TILE_SIZE = 20  # pixels
-#TODO could display running totals in status line ??
-clearedCount : int  = 0
-markedCount : int  = 0
-tiles = []  # arraylist of rows, module global aids debugging
-frame : Tk.Frame = None
+
+# Putting 'global' vars in a class so can explicitly refer to
+# their scope in other classes.
+class G():
+    clearedCount : int  = 0
+    markedCount : int  = 0
+    mineCount : int = 15
+    tiles = []  # arraylist of rows, module global aids debugging
+    frame : Tk.Frame = None
 
 
 class TileState():
@@ -74,6 +89,38 @@ class Tile(Tk.Button):
     def noOp(self, event):
         zzxzz = 0 # empty body not possible, right ?
 
+    # Cycle the label "" -> X -> ? -> ""
+    # Disable left clicks for X and ? states
+    # to protect against accidentally triggering mine
+    def tileClickRight(self, event):
+        transition = ""
+        if self.state == TileState.HIDDEN:
+            self.state = TileState.MARKED
+            self.bind("<1>", self.noOp)
+            self.config(state = "disabled")
+            transition = "state->MARKED"
+            G.markedCount += 1
+            logMinesRemaining()
+            self.userWonCheck()
+        elif self.state == TileState.MARKED:
+            self.state = TileState.MAYBE
+            self.bind("<1>", self.noOp)
+            self.config(state = "disabled")
+            transition = "state->MAYBE"
+            G.markedCount -= 1
+            logMinesRemaining()
+        elif self.state == TileState.MAYBE:
+            self.state = TileState.HIDDEN
+            transition = "state->HIDDEN"
+            self.bind("<1>", self.tileClickLeft)
+            self.config(state = "normal")
+        else:
+            raise AssertionError("row=%d,col=%d, unexpected state %s"%(self.row, self.col, self.state))
+        #log("R-clk: %s (%s)" % (self.__str__(), transition))
+
+        #Update button label to new state
+        self.config(text=TileState.labels[self.state])
+
     def tileClickLeft(self, event):
         # log("L-clk: " + self.__str__())
         if self.hasMine :
@@ -83,9 +130,10 @@ class Tile(Tk.Button):
                 self.openCluster()
             else :
                 self.open() #also sets label
+            logMinesRemaining()
 
     def userLost(self):
-        log("You're DEAD %s" % self)
+        # log("You're DEAD %s" % self)
         self.setLabel(DEATH_CROSS)
         self.config(font="-weight bold" )
         self.bind("<1>", self.noOp)
@@ -94,6 +142,13 @@ class Tile(Tk.Button):
 
         if messagebox.askokcancel("KaBOOM! You just died..", "Start new game?"):
             newGame()
+
+    def userWonCheck(self):
+        if GRID_COLS * GRID_ROWS <= G.clearedCount + G.markedCount:
+            log("You won! Congratulations.")
+            if messagebox.askokcancel("Congratulations!", "Start new game?"):
+                newGame()
+
 
     # 1) User left-clicked empty tile, or
     # 2) Called as part of clearing a cluster
@@ -109,48 +164,16 @@ class Tile(Tk.Button):
             self.bind("<3>", self.noOp)
             self.config(state = "disabled")
             #without this, the module-global variable not seen here!
-            global clearedCount
-            clearedCount += 1
-            checkGameWon(self)
+            G.clearedCount += 1
+            self.userWonCheck()
 
     def openCluster(self):
         self.open()
-        for ngbTile in getNeighbourTiles(tiles, self):
+        for ngbTile in getNeighbourTiles(G.tiles, self):
             if not ngbTile.isOpen and not ngbTile.hasMine:
                 ngbTile.open()
                 if ngbTile.detectedMines == 0 :
                     ngbTile.openCluster() #NB recursion
-
-    # Cycle the label "" -> X -> ? -> ""
-    # Disable left clicks for X and ? states
-    # to protect against accidentally triggering mine
-    def tileClickRight(self, event):
-        transition = ""
-        global markedCount
-        if self.state == TileState.HIDDEN:
-            self.state = TileState.MARKED
-            self.bind("<1>", self.noOp)
-            self.config(state = "disabled")
-            transition = "state->MARKED"
-            markedCount += 1
-            checkGameWon(self)
-        elif self.state == TileState.MARKED:
-            self.state = TileState.MAYBE
-            self.bind("<1>", self.noOp)
-            self.config(state = "disabled")
-            transition = "state->MAYBE"
-            markedCount -= 1
-        elif self.state == TileState.MAYBE:
-            self.state = TileState.HIDDEN
-            transition = "state->HIDDEN"
-            self.bind("<1>", self.tileClickLeft)
-            self.config(state = "normal")
-        else:
-            raise AssertionError("row=%d,col=%d, unexpected state %s"%(self.row, self.col, self.state))
-        #log("R-clk: %s (%s)" % (self.__str__(), transition))
-
-        #Update button label to new state
-        self.config(text=TileState.labels[self.state])
 
 
 
@@ -165,11 +188,6 @@ def log(msg:str):
 def trace(msg:str):
     if(False): print (msg)
 
-
-def checkGameWon( tile : Tile ):
-    if GRID_COLS*GRID_ROWS <= clearedCount + markedCount :
-        print( "TODO congrats dialog needed here")
-        log("You won! Congratulations.")
 
 # Example of typed arguments and return value in a function
 #
@@ -239,25 +257,29 @@ def quit():
     win.destroy()
 
 # Fill the middle frame with a grid of squares
-# Some of them have a mine in them
+# Then ranomly place a mine under some of them
 #
 def newGame():
-    global frame
-    markedCount = 0
-    openedCount = 0
-    tiles.clear()
+    G.markedCount = 0
+    G.clearedCount = 0
+    G.tiles.clear()
     for r in range(GRID_ROWS):
         tileRow = []
         for c in range(GRID_COLS):
-            tile = Tile(frame, c, r, TEXT_HIDDEN)
+            tile = Tile(G.frame, c, r, TEXT_HIDDEN)
             tileRow.append(tile)
             tile.grid(row=r, column=c, sticky="ewns") #ewns = fill grid cell
-        tiles.append(tileRow)
+        G.tiles.append(tileRow)
     mineIndices = []
     # TODO dialog to configure game ?
-    placeMinesRandomly(15, tiles, mineIndices)
+    placeMinesRandomly(15, G.tiles, mineIndices)
+    logMinesRemaining()
 
-# I guess main starts here..
+def logMinesRemaining():
+    msg = "Cleared: %d\t Mines left: %d" % (G.clearedCount, G.mineCount - G.markedCount)
+    log(msg)
+# Program starts here
+# ====================
 
 # basic window with title and standard controls
 win = Tk.Tk()
@@ -284,8 +306,8 @@ Tk.Button(toolbar, text="quit",     command=quit).pack(side="right", padx=2, pad
 Tk.Button(toolbar, text="TODO use images!").pack(side="left", padx=2, pady=2)
 toolbar.pack(side="top", fill="x")
 
-frame = Tk.Frame(win, width=TILE_SIZE * GRID_COLS, height=TILE_SIZE * GRID_ROWS)
-frame.pack()
+G.frame = Tk.Frame(win, width=TILE_SIZE * GRID_COLS, height=TILE_SIZE * GRID_ROWS)
+G.frame.pack()
 
 # add a status line at bottom
 statusLine = Tk.Label(win, text="", bd=1, relief="sunken", anchor="w")
