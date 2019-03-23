@@ -6,10 +6,19 @@ except ImportError:
     import Tkinter as Tk  ## python2: tkinter 
 import random
 
+## SUMMARY OF IDEAS FOR IMPROVEMENTS, EASY TO HARD
+#  TODO dialogs on winning / losing should be trivial
+#  TODO could display running totals in status line ??
+#  TODO dialog to configure game ?
+#  TODO add keyboard navigation should be straightforward
+#  TODO use images in buttons
+
+
+
 # GLOBALS AND CONSTANTS
 # Seems python has no const or final keyword.
-# Just remember never to assign to an UPPERCASE variable
-# To avoid declaring one you already defined, maybe put
+# Must simply never assign to an UPPERCASE variable more than once
+# To help prevent redeclaring one you already defined, maybe put
 # all constants definitions in one place.
 #
 COLOR_DEAD   = "red"
@@ -25,9 +34,10 @@ TEXT_BOMB   = "  *  "
 TEXT_MAYBE  = "  ?  "
 TILE_SIZE = 20  # pixels
 #TODO could display running totals in status line ??
-openedCount : int  = 0
+clearedCount : int  = 0
 markedCount : int  = 0
 tiles = []  # arraylist of rows, module global aids debugging
+frame : Tk.Frame = None
 
 
 class TileState():
@@ -92,8 +102,8 @@ class Tile(Tk.Button):
             self.bind("<3>", self.noOp)
             self.config(state = "disabled")
             #without this, the module-global variable not seen here!
-            global openedCount
-            openedCount += 1
+            global clearedCount
+            clearedCount += 1
             checkGameWon(self)
 
     def openCluster(self):
@@ -141,59 +151,22 @@ class Tile(Tk.Button):
 # Wants two blank lines after functions.
 
 def log(msg:str):
-    status.config(text=msg)
+    statusLine.config(text=msg)
     print (msg)
 
-# menu handlers
-#
-def handleNewGame():
-    log("clicked new game")
-    newGame()
+#Activate tracing : False -> True
+def trace(msg:str):
+    if(False): print (msg)
 
-
-def handleQuit():
-    log("clicked quit")
-    win.destroy()
-
-def handleHelpAbout():
-    log("clicked Help|About")
-
-# basic window with title and standard controls
-win = Tk.Tk()
-
-
-# click event handlers
-def expand(x, y, r, c):
-    return "mouse(%d,%d)==grid(%d,%d)" % (x, y, r, c)
-
-
-def onClick(event):
-    (row, col) = mouse2grid(event.x, event.y)
-    log("Clicked at %s" % expand(event.x, event.y, row, col))
-
-
-def onRightClick(event):
-    log("Right-clicked at x=%d,y=%d" % (event.x, event.y))
-
-
-def onDrag(event):
-    log("Dragged to x=%d,y=%d" % (event.x, event.y))
-
-# x <--> column
-# y <--> row
-def mouse2grid(xmouse, ymouse) :
-    gridX = int(xmouse / TILE_SIZE)
-    gridY = int(ymouse / TILE_SIZE)
-    return (gridX, gridY)
 
 def checkGameWon( tile : Tile ):
-    if GRID_COLS*GRID_ROWS <= openedCount + markedCount :
+    if GRID_COLS*GRID_ROWS <= clearedCount + markedCount :
         print( "TODO congrats dialog needed here")
         log("You won! Congratulations.")
 
-# Scatter mines randomly
 # Example of typed arguments and return value in a function
-def placeRandomMines(nMines : int, tileRows : list, mineIndexes : list) -> int:
+#
+def placeMinesRandomly(nMines : int, tileRowArray : list, mineIndexes : list) -> int:
     N = GRID_COLS*GRID_ROWS
     if N < nMines :
         raise ValueError("Can't place %d mines in %d grid tiles" % (nMines,N ))
@@ -203,7 +176,7 @@ def placeRandomMines(nMines : int, tileRows : list, mineIndexes : list) -> int:
     for attempt in range(1, 100):
         print("Lay mines iter: %d (outstanding %d mines)..  " % (attempt, nMines))
         rCol, rRow = random.randint(0,GRID_COLS-1), random.randint(0,GRID_ROWS-1)
-        tileRow = tileRows[rRow]
+        tileRow = tileRowArray[rRow]
         tile = tileRow[rCol]
         print( "Chosen random tile: %s" % tile)
 
@@ -211,7 +184,7 @@ def placeRandomMines(nMines : int, tileRows : list, mineIndexes : list) -> int:
             tile.hasMine = True
             mineIndexes.append(tile)
 
-            ngbList = getNeighbourTiles(tileRows, tile)
+            ngbList = getNeighbourTiles(tileRowArray, tile)
             for ngb in ngbList :
                 dm = ngb.detectedMines
                 ngb.detectedMines += 1
@@ -228,7 +201,7 @@ def placeRandomMines(nMines : int, tileRows : list, mineIndexes : list) -> int:
     return nMines
 
 def getNeighbourTiles( tileRows : list, tile : Tile ) -> list :
-    print("Collect ngbs of Tile:", tile)
+    trace("Collect ngbs of Tile: %s" % tile)
     ngbs = []
     tRow, tCol = tile.row, tile.col
     # range has inclusive lower and exclusive upper bounds,
@@ -247,51 +220,49 @@ def getNeighbourTiles( tileRows : list, tile : Tile ) -> list :
                     % (ngbRow, ngbCol,ngbTile.row, ngbTile.col)
                 )
             if ngbTile != tile :
-                print("\tNgb (dRow %d, dCol %d): %s" % (dRow, dCol, ngbTile)  )
+                trace("\tNgb (dRow %d, dCol %d): %s" % (dRow, dCol, ngbTile)  )
                 ngbs.append(ngbTile)
             else:
-                print("\tSelf (dRow %d, dCol %d): %s" % (dRow, dCol, ngbTile)  )
+                trace("\tSelf (dRow %d, dCol %d): %s" % (dRow, dCol, ngbTile)  )
     return ngbs
 
+
+def quit():
+    log("clicked quit")
+    win.destroy()
 
 # Fill the middle frame with a grid of squares
 # Some of them have a mine in them
 #
 def newGame():
+    global frame
     markedCount = 0
     openedCount = 0
     tiles.clear()
     for r in range(GRID_ROWS):
-        tileRow = []    #arraylist of tiles
+        tileRow = []
         for c in range(GRID_COLS):
-            b = Tile(frame, c, r, TEXT_HIDDEN)
-            tileRow.append(b)
-            b.grid(row=r, column=c, sticky="ewns")
+            tile = Tile(frame, c, r, TEXT_HIDDEN)
+            tileRow.append(tile)
+            tile.grid(row=r, column=c, sticky="ewns") #ewns = fill grid cell
         tiles.append(tileRow)
     mineIndices = []
     # TODO dialog to configure game ?
-    mineCount = placeRandomMines( 15, tiles, mineIndices )
+    placeMinesRandomly(15, tiles, mineIndices)
 
 # I guess main starts here..
 
-# just some buttons in a frame parked at the top, for a toolbar
-# instead of text=".." can use image= for which you can load
+# basic window with title and standard controls
+win = Tk.Tk()
+
+# Toolbar = some buttons in a frame parked at the top
+# Instead of text=".." can use image= for which you can load
 # an image from disk using PhotoImage constructor.
-toolbar = Tk.Frame( win )
-b = Tk.Button(toolbar, text="new game", command=handleNewGame)
-b.pack(side="left", padx=2, pady=2)
-
-b = Tk.Button(toolbar, text="TODO use images!", command=handleQuit)
-b.pack(side="left", padx=2, pady=2)
-
-b = Tk.Button(toolbar, text="quit", command=handleQuit)
-b.pack(side="right", padx=2, pady=2)
-
-toolbar.pack(side="top", fill="x")
-
-# <Button-1> = left click  (or <ButtonPress-1> or just <1>)
-# <Button-2> = middle click
-# <Button-3> = right click
+#
+# Binding events:
+# <1> or <Button-1> or <ButtonPress-1> = left click
+# <2> = middle click
+# <3> = right click
 # <B1-Motion> = left drag
 # <ButtonRelease-1> = left button released
 # <DoubleButton-1> = left button double-clicked
@@ -300,20 +271,18 @@ toolbar.pack(side="top", fill="x")
 # <Return> = keyboard 'Enter' key pressed with widget focused
 # .. and lots of other standard keys..
 #
-# Can s/Button/ButtonPress/ or s/Button-//
-# TODO remove mouse handling for frame unless needed ?
-#
+toolbar = Tk.Frame( win )
+Tk.Button(toolbar, text="new game", command=newGame).pack(side="left", padx=2, pady=2)
+Tk.Button(toolbar, text="quit",     command=quit).pack(side="right", padx=2, pady=2)
+Tk.Button(toolbar, text="TODO use images!").pack(side="left", padx=2, pady=2)
+toolbar.pack(side="top", fill="x")
+
 frame = Tk.Frame(win, width=TILE_SIZE * GRID_COLS, height=TILE_SIZE * GRID_ROWS)
-frame.bind("<1>", onClick)
-frame.bind("<3>", onRightClick)
-# frame.bind("<B1-Motion>", onDrag)  # Hmm this is cool
 frame.pack()
 
-#
-
 # add a status line at bottom
-status = Tk.Label(win, text="", bd=1, relief="sunken", anchor="w")
-status.pack(side="bottom", fill="x")
+statusLine = Tk.Label(win, text="", bd=1, relief="sunken", anchor="w")
+statusLine.pack(side="bottom", fill="x")
 newGame()
 
 win.mainloop()
