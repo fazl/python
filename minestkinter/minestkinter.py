@@ -7,16 +7,15 @@ except ImportError:
     import Tkinter as Tk  ## python2: tkinter
     import tkMessageBox as messagebox
 import random
+from config_dialog import ConfigDialog
 
 ## SUMMARY OF IDEAS FOR IMPROVEMENTS, EASY TO HARD
 #  DONE dialogs on winning / losing should be trivial
 #  DONE could display running totals in status line ??
-#  TODO dialog to configure game ?
+#  DONE dialog to configure game ?
 #  TODO add keyboard navigation should be straightforward
 #  TODO: check for label/state confusion
 #  TODO use images in buttons
-
-
 
 # GLOBALS AND CONSTANTS
 # Seems python has no const or final keyword.
@@ -39,8 +38,6 @@ COLOR_HIDDEN = "darkgrey"
 COLOR_MARKED = "black"
 COLOR_OPEN   = "lightgrey"
 DEATH_CROSS = '\u2620'      #skull & crossbones symbol
-GRID_ROWS = 15
-GRID_COLS = GRID_ROWS
 TEXT_HIDDEN = "     "
 TEXT_MARKED = "  x  "
 TEXT_BOMB   = "  *  "
@@ -51,6 +48,8 @@ TILE_SIZE = 20  # pixels
 # their scope in other classes.
 class G():
     clearedCount : int  = 0
+    gridRows = 15
+    gridCols = gridRows
     markedCount : int  = 0
     mineCount : int = 15
     tiles = []  # arraylist of rows, module global aids debugging
@@ -86,6 +85,8 @@ class Tile(Tk.Button):
         self.config(text=lbl)
         self.label = lbl
 
+    # X and ? states protected (disable left clicks)
+    #
     def setState(self, state:int) :
         if TileState.MARKED == state or TileState.MAYBE == state:
             self.bind("<1>", self.noOp)
@@ -102,8 +103,7 @@ class Tile(Tk.Button):
         zzxzz = 0 # empty body not possible, right ?
 
     # Cycle the label "" -> X -> ? -> ""
-    # Disable left clicks for X and ? states
-    # to protect against accidentally triggering mine
+    #
     def tileClickRight(self, event):
         if self.state == TileState.HIDDEN:
             self.setState( TileState.MARKED )
@@ -143,7 +143,10 @@ class Tile(Tk.Button):
             newGame()
 
     def userWonCheck(self):
-        if GRID_COLS * GRID_ROWS <= G.clearedCount + G.markedCount:
+        # No check made that markedCount = mineCount
+        # as only empty cells can be cleared
+        # Might want to rethink this..
+        if G.gridCols * G.gridRows <= G.clearedCount + G.markedCount:
             log("You won! Congratulations.")
             if messagebox.askokcancel("Congratulations!", "Start new game?"):
                 newGame()
@@ -192,11 +195,11 @@ def getNeighbourTiles( tileRows : list, tile : Tile ) -> list :
     # unlike randomint :(
     for dRow in range(-1,2):
         ngbRow = tRow+dRow
-        if ngbRow not in range(GRID_ROWS): continue
+        if ngbRow not in range(G.gridRows): continue
         tileRow = tileRows[ngbRow]
         for dCol in range(-1,2):
             ngbCol = tCol + dCol
-            if ngbCol not in range(GRID_COLS): continue
+            if ngbCol not in range(G.gridCols): continue
             ngbTile : Tile = tileRow[ngbCol]
             if ngbTile.row != ngbRow and ngbTile.col != ngbCol :
                 raise ValueError(
@@ -224,22 +227,37 @@ def newGame():
     G.markedCount = 0
     G.clearedCount = 0
     G.tiles.clear()
-    for r in range(GRID_ROWS):
+    for r in range(G.gridRows):
         tileRow = []
-        for c in range(GRID_COLS):
+        for c in range(G.gridCols):
             tile = Tile(G.frame, c, r, TEXT_HIDDEN)
             tileRow.append(tile)
             tile.grid(row=r, column=c, sticky="ewns") #ewns = fill grid cell
         G.tiles.append(tileRow)
     mineIndices = []
-    # TODO dialog to configure game ?
-    placeMinesRandomly(15, G.tiles, mineIndices)
+    if G.mineCount != placeMinesRandomly(G.mineCount, G.tiles, mineIndices):
+        raise ValueError("Didn't place %s mines, panic" % G.mineCount)
     logMinesRemaining()
+
+# Pop ConfigDialog to set game parameters
+#
+def setupGame():
+    d = ConfigDialog(win, G.mineCount, G.gridRows, G.gridCols)
+    d.eMines.focus_set()
+    d.top.grab_set()
+    win.wait_window(d.top)
+    if d.changed:
+        # TODO Understand why this code works after d.top destroyed ??
+        G.mineCount = d.mines
+        G.gridRows= d.rows
+        G.gridCols= d.cols
+        newGame()
+
 
 # Example of typed arguments and return value in a function
 #
 def placeMinesRandomly(nMines : int, tileRowArray : list, mineIndexes : list) -> int:
-    N = GRID_COLS*GRID_ROWS
+    N = G.gridCols * G.gridRows
     if N < nMines :
         raise ValueError("Can't place %d mines in %d grid tiles" % (nMines,N ))
     origMines = nMines
@@ -247,7 +265,7 @@ def placeMinesRandomly(nMines : int, tileRowArray : list, mineIndexes : list) ->
     mineIndexes.clear()
     for attempt in range(1, 100):
         print("Lay mines iter: %d (outstanding %d mines)..  " % (attempt, nMines))
-        rCol, rRow = random.randint(0,GRID_COLS-1), random.randint(0,GRID_ROWS-1)
+        rCol, rRow = random.randint(0, G.gridCols - 1), random.randint(0, G.gridRows - 1)
         tileRow = tileRowArray[rRow]
         tile = tileRow[rCol]
         print( "Chosen random tile: %s" % tile)
@@ -270,7 +288,7 @@ def placeMinesRandomly(nMines : int, tileRowArray : list, mineIndexes : list) ->
                 break
         else :
             print("\nAlready occupied: (col:%d, row:%d)\n", (rCol, rRow))
-    return nMines
+    return origMines-nMines
 
 
 def quit():
@@ -306,11 +324,12 @@ win.protocol("WM_DELETE_WINDOW", confirmExit)
 #
 toolbar = Tk.Frame( win )
 Tk.Button(toolbar, text="new game", command=newGame).pack(side="left", padx=2, pady=2)
+Tk.Button(toolbar, text="setup",   command=setupGame).pack(side="left", padx=2, pady=2)
 Tk.Button(toolbar, text="quit",     command=quit).pack(side="right", padx=2, pady=2)
 Tk.Button(toolbar, text="TODO use images!").pack(side="left", padx=2, pady=2)
 toolbar.pack(side="top", fill="x")
 
-G.frame = Tk.Frame(win, width=TILE_SIZE * GRID_COLS, height=TILE_SIZE * GRID_ROWS)
+G.frame = Tk.Frame(win, width=TILE_SIZE * G.gridCols, height=TILE_SIZE * G.gridRows)
 G.frame.pack()
 
 # add a status line at bottom
