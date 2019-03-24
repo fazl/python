@@ -13,6 +13,7 @@ import random
 #  DONE could display running totals in status line ??
 #  TODO dialog to configure game ?
 #  TODO add keyboard navigation should be straightforward
+#  TODO: check for label/state confusion
 #  TODO use images in buttons
 
 
@@ -56,14 +57,12 @@ class G():
     frame : Tk.Frame = None
 
 
+# Wonder what would happen if there were separate instances ?
 class TileState():
-    HIDDEN, MARKED, BOMB, MAYBE = range(0, 4)
-    labels={
-        BOMB   : TEXT_BOMB,
-        HIDDEN : TEXT_HIDDEN,
-        MARKED : TEXT_MARKED,
-        MAYBE  : TEXT_MAYBE
-    }
+    HIDDEN, MARKED, MAYBE = range(0, 3)
+    labels= [ TEXT_HIDDEN, TEXT_MARKED, TEXT_MAYBE ]
+    def getLabel(state:int)->str:       #Class level access (no self arg)
+        return TileState.labels[state]  #Treats labels as a static!
 
 class Tile(Tk.Button):
     def __init__(self, master, col, row, label):
@@ -76,15 +75,28 @@ class Tile(Tk.Button):
         self.hasMine = False
         self.label = label
         self.detectedMines = 0
-        self.state = TileState.HIDDEN
-
-    def setLabel(self, lbl) :
-        self.config(text=lbl)
-        self.label = lbl
+        self.state = TileState.HIDDEN   #Care: Python lacks Java's safe enums
 
     def __str__(self):
         return "Tile at x=%d, y=%d, live=%s, live ngbs=%d" \
             % (self.col, self.row, self.hasMine, self.detectedMines)
+
+    #  TODO: check for label/state confusion
+    def setLabel(self, lbl) :
+        self.config(text=lbl)
+        self.label = lbl
+
+    def setState(self, state:int) :
+        if TileState.MARKED == state or TileState.MAYBE == state:
+            self.bind("<1>", self.noOp)
+            self.config(state = "disabled")
+        elif TileState.HIDDEN == state:
+            self.bind("<1>", self.tileClickLeft)
+            self.config(state = "normal")
+        else:
+            raise ValueError("setState given unexpected value: %d" % state)
+        self.state = state
+        self.setLabel(TileState.getLabel(state))
 
     def noOp(self, event):
         zzxzz = 0 # empty body not possible, right ?
@@ -93,33 +105,20 @@ class Tile(Tk.Button):
     # Disable left clicks for X and ? states
     # to protect against accidentally triggering mine
     def tileClickRight(self, event):
-        transition = ""
         if self.state == TileState.HIDDEN:
-            self.state = TileState.MARKED
-            self.bind("<1>", self.noOp)
-            self.config(state = "disabled")
-            transition = "state->MARKED"
+            self.setState( TileState.MARKED )
             G.markedCount += 1
-            logMinesRemaining()
             self.userWonCheck()
         elif self.state == TileState.MARKED:
-            self.state = TileState.MAYBE
-            self.bind("<1>", self.noOp)
-            self.config(state = "disabled")
-            transition = "state->MAYBE"
+            self.setState( TileState.MAYBE )
             G.markedCount -= 1
-            logMinesRemaining()
         elif self.state == TileState.MAYBE:
-            self.state = TileState.HIDDEN
-            transition = "state->HIDDEN"
-            self.bind("<1>", self.tileClickLeft)
-            self.config(state = "normal")
+            self.setState( TileState.HIDDEN )
         else:
             raise AssertionError("row=%d,col=%d, unexpected state %s"%(self.row, self.col, self.state))
-        #log("R-clk: %s (%s)" % (self.__str__(), transition))
+        #log("R-clk: %s" % (self.__str__()))
+        logMinesRemaining()
 
-        #Update button label to new state
-        self.config(text=TileState.labels[self.state])
 
     def tileClickLeft(self, event):
         # log("L-clk: " + self.__str__())
@@ -216,7 +215,7 @@ def log(msg:str):
     print (msg)
 
 def logMinesRemaining():
-    log("Mines left: %d\t Cleared: %d" % (G.mineCount - G.markedCount, G.clearedCount))
+    log("Mines Remaining: %d\t Cleared: %d" % (G.mineCount - G.markedCount, G.clearedCount))
 
 # Fill the middle frame with a grid of squares
 # Then ranomly place a mine under some of them
