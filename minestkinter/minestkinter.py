@@ -1,7 +1,7 @@
 # OK lets see if we can do a crude minesweeper in python
 # Hey, coding in pycharm is more fun than in text editor!
 try:
-    import tkinter as Tk  ## python3: tkinter 
+    import tkinter as Tk  ## python3: tkinter
     import tkinter.messagebox as messagebox    # stackoverflow.com/a/38181986
 except ImportError:
     import Tkinter as Tk  ## python2: tkinter
@@ -48,12 +48,12 @@ TILE_SIZE = 20  # pixels
 class G():
     gridRows = 15
     gridCols = gridRows
-    numCleared : int  = 0
-    numClicks  : int  = 0
-    numMarked  : int  = 0
-    numMines   : int = 15
+    numCleared  = 0
+    numClicks   = 0
+    numMarked   = 0
+    numMines    = 15
     tileRowArray = []  # arraylist of rows, module global aids debugging
-    frame : Tk.Frame = None
+    frame  = None
 
 
 # Wonder what would happen if there were separate instances ?
@@ -79,6 +79,35 @@ class Tile(Tk.Button):
     def __str__(self):
         return "Tile at x=%d, y=%d, live=%s, live ngbs=%d" \
             % (self.col, self.row, self.hasMine, self.detectedMines)
+
+    # The 8 neighbours around a cell in a 2d grid
+    #
+    def mooreNeighbours(self, tileRows: list) -> list:
+        trace("Collect ngbs of Tile: %s" % self)
+        ngbs = []
+        # range has inclusive lower and exclusive upper bounds,
+        # unlike randomint :(
+        for dRow in range(-1, 2):
+            ngbRow = self.row + dRow
+            if ngbRow not in range(G.gridRows):
+                continue                #offgrid
+            tileRow = tileRows[ngbRow]
+            for dCol in range(-1, 2):
+                ngbCol = self.col + dCol
+                if ngbCol not in range(G.gridCols):
+                    continue            #offgrid
+                ngbTile = tileRow[ngbCol]
+                if ngbTile.row != ngbRow and ngbTile.col != ngbCol:
+                    raise ValueError(
+                        "Misplaced ngb at r:%d,c:%d has row %d, col %d"
+                        % (ngbRow, ngbCol, ngbTile.row, ngbTile.col)
+                    )
+                if ngbTile != self:
+                    trace("\tNgb (dRow %d, dCol %d): %s" % (dRow, dCol, ngbTile))
+                    ngbs.append(ngbTile)
+                else:
+                    trace("\tSelf (dRow %d, dCol %d): %s" % (dRow, dCol, ngbTile))
+        return ngbs
 
     #  TODO: check for label/state confusion
     def setLabel(self, lbl) :
@@ -180,7 +209,7 @@ class Tile(Tk.Button):
     # Recursively open all empty neighbours
     def openCluster(self):
         self.open()
-        for ngbTile in getNeighbourTiles(G.tileRowArray, self):
+        for ngbTile in self.mooreNeighbours(G.tileRowArray):
             if not ngbTile.isOpen and not ngbTile.hasMine:
                 ngbTile.open()
                 if ngbTile.detectedMines == 0 :
@@ -194,33 +223,6 @@ class Tile(Tk.Button):
 def confirmExit():
     if messagebox.askokcancel("Quit", "Really quit?"):
         win.destroy()
-
-
-def getNeighbourTiles( tileRows : list, tile : Tile ) -> list :
-    trace("Collect ngbs of Tile: %s" % tile)
-    ngbs = []
-    tRow, tCol = tile.row, tile.col
-    # range has inclusive lower and exclusive upper bounds,
-    # unlike randomint :(
-    for dRow in range(-1,2):
-        ngbRow = tRow+dRow
-        if ngbRow not in range(G.gridRows): continue
-        tileRow = tileRows[ngbRow]
-        for dCol in range(-1,2):
-            ngbCol = tCol + dCol
-            if ngbCol not in range(G.gridCols): continue
-            ngbTile : Tile = tileRow[ngbCol]
-            if ngbTile.row != ngbRow and ngbTile.col != ngbCol :
-                raise ValueError(
-                    "Misplaced ngb at r:%d,c:%d has row %d, col %d"
-                    % (ngbRow, ngbCol,ngbTile.row, ngbTile.col)
-                )
-            if ngbTile != tile :
-                trace("\tNgb (dRow %d, dCol %d): %s" % (dRow, dCol, ngbTile)  )
-                ngbs.append(ngbTile)
-            else:
-                trace("\tSelf (dRow %d, dCol %d): %s" % (dRow, dCol, ngbTile)  )
-    return ngbs
 
 def log(msg:str):
     statusLine.config(text=msg)
@@ -284,7 +286,7 @@ def placeMinesRandomly(nMines : int, tileRowArray : list, mineIndexes : list) ->
             tile.hasMine = True
             mineIndexes.append(tile)
 
-            ngbList = getNeighbourTiles(tileRowArray, tile)
+            ngbList = tile.mooreNeighbours(tileRowArray)
             for ngb in ngbList :
                 dm = ngb.detectedMines
                 ngb.detectedMines += 1

@@ -14,37 +14,34 @@ class ConfigDialog:
         # Must do this in two steps; sadly grid() returns None..
         # (No warning of course from "Be my guest, make a mess" Python)
         #
-        e = Tk.Entry(d, textvariable=var)
-        e.grid(row=r, column=c)
+        e = Tk.Entry(d, textvariable=var, width=4)
+        e.grid(row=r, column=c, sticky='ew')
         return e
 
-    def __init__(self, ownerWnd, mineCount, gridRows, gridcols):
-        print("In ConfigDialog ctor")
+    def __init__(self, ownerWnd, mineCount, gridRows, gridCols):
         self.origMines = self.mines = Tk.IntVar(value=mineCount)
-        self.origRows = self.rows = Tk.IntVar(value=gridRows)
-        self.origCols = self.cols = Tk.IntVar(value=gridcols)
+        self.origRows  = self.rows  = Tk.IntVar(value=gridRows)
+        self.origCols  = self.cols  = Tk.IntVar(value=gridCols)
         self.changed = False
 
         d = self.top = Tk.Toplevel(ownerWnd)
 
-        # Pressing Enter  --> OK
-        # Pressing Escape --> Esc
         # CAVEAT <Enter> means mouse enters widget area
         # and causes untold comedy at runtime !
         #
-        d.bind("<Return>", self.ok)
-        d.bind("<Escape>", self.cancel)
+        d.bind("<Return>", self.ok)     # Pressing Enter  --> OK
+        d.bind("<Escape>", self.cancel) # Pressing Escape --> Cancel
 
         Tk.Label(d, text="Mines:").grid(row=0, column=0)
         Tk.Label(d, text="Rows: ").grid(row=1, column=0)
         Tk.Label(d, text="Cols: ").grid(row=2, column=0)
 
-        self.eMines = self.mkEntry(d, self.mines, 0, 2)
-        self.eRows  = self.mkEntry(d, self.rows,  1, 2)
-        self.eCols  = self.mkEntry(d, self.cols,  2, 2)
+        self.eMines = self.mkEntry(d, self.mines, 0, 1)
+        self.eRows  = self.mkEntry(d, self.rows,  1, 1)
+        self.eCols  = self.mkEntry(d, self.cols,  2, 1)
 
         Tk.Button(d, text="OK", command=self.ok).grid(row=3, column=0)
-        Tk.Button(d, text="CANCEL", command=self.cancel).grid(row=3, column=2)
+        Tk.Button(d, text="CANCEL", command=self.cancel).grid(row=3, column=1)
 
     def validate(self):
         try:
