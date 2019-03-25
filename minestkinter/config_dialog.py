@@ -19,7 +19,7 @@ class ConfigDialog:
         return e
 
     def __init__(self, ownerWnd, mineCount, gridRows, gridcols):
-        print("In MyDialog.ctor")
+        print("In ConfigDialog ctor")
         self.origMines = self.mines = Tk.IntVar(value=mineCount)
         self.origRows = self.rows = Tk.IntVar(value=gridRows)
         self.origCols = self.cols = Tk.IntVar(value=gridcols)

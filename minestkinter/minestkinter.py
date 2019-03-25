@@ -40,19 +40,19 @@ COLOR_OPEN   = "lightgrey"
 DEATH_CROSS = '\u2620'      #skull & crossbones symbol
 TEXT_HIDDEN = "     "
 TEXT_MARKED = "  x  "
-TEXT_BOMB   = "  *  "
 TEXT_MAYBE  = "  ?  "
 TILE_SIZE = 20  # pixels
 
 # Putting 'global' vars in a class so can explicitly refer to
 # their scope in other classes.
 class G():
-    clearedCount : int  = 0
     gridRows = 15
     gridCols = gridRows
-    markedCount : int  = 0
-    mineCount : int = 15
-    tiles = []  # arraylist of rows, module global aids debugging
+    numCleared : int  = 0
+    numClicks  : int  = 0
+    numMarked  : int  = 0
+    numMines   : int = 15
+    tileRowArray = []  # arraylist of rows, module global aids debugging
     frame : Tk.Frame = None
 
 
@@ -105,22 +105,24 @@ class Tile(Tk.Button):
     # Cycle the label "" -> X -> ? -> ""
     #
     def tileClickRight(self, event):
+        G.numClicks += 1
         if self.state == TileState.HIDDEN:
             self.setState( TileState.MARKED )
-            G.markedCount += 1
+            G.numMarked += 1
             self.userWonCheck()
         elif self.state == TileState.MARKED:
             self.setState( TileState.MAYBE )
-            G.markedCount -= 1
+            G.numMarked -= 1
         elif self.state == TileState.MAYBE:
             self.setState( TileState.HIDDEN )
         else:
             raise AssertionError("row=%d,col=%d, unexpected state %s"%(self.row, self.col, self.state))
         #log("R-clk: %s" % (self.__str__()))
-        logMinesRemaining()
+        updateDisplayedCounts()
 
 
     def tileClickLeft(self, event):
+        G.numClicks += 1
         # log("L-clk: " + self.__str__())
         if self.hasMine :
             self.userLost()
@@ -129,7 +131,7 @@ class Tile(Tk.Button):
                 self.openCluster()
             else :
                 self.open() #also sets label
-            logMinesRemaining()
+            updateDisplayedCounts()
 
     def userLost(self):
         # log("You're DEAD %s" % self)
@@ -145,8 +147,8 @@ class Tile(Tk.Button):
     def userWonCheck(self):
         # No check made that markedCount = mineCount
         # as only empty cells can be cleared
-        # Might want to rethink this..
-        if G.gridCols * G.gridRows <= G.clearedCount + G.markedCount:
+        # But may rethink this..
+        if G.gridCols * G.gridRows <= G.numCleared + G.numMarked:
             log("You won! Congratulations.")
             if messagebox.askokcancel("Congratulations!", "Start new game?"):
                 newGame()
@@ -160,18 +162,25 @@ class Tile(Tk.Button):
     def open(self):
         if not self.isOpen :
             self.isOpen = True
-            self.setLabel(str(self.detectedMines) if 0<self.detectedMines else "  ")
+            self.setLabel(
+                # Note: Python ternary conditional
+                # Effectively expr1 ? condition : expr2
+                # Its just a C ternary dressed up to look different
+                # which makes it harder to learn python and harder
+                # to see the essential differences from say, C.
+                str(self.detectedMines) if 0<self.detectedMines else "  "
+            )
             self.config(bg=COLOR_OPEN)
             self.bind("<1>", self.noOp)
             self.bind("<3>", self.noOp)
             self.config(state = "disabled")
-            #without this, the module-global variable not seen here!
-            G.clearedCount += 1
+            G.numCleared += 1
             self.userWonCheck()
 
+    # Recursively open all empty neighbours
     def openCluster(self):
         self.open()
-        for ngbTile in getNeighbourTiles(G.tiles, self):
+        for ngbTile in getNeighbourTiles(G.tileRowArray, self):
             if not ngbTile.isOpen and not ngbTile.hasMine:
                 ngbTile.open()
                 if ngbTile.detectedMines == 0 :
@@ -217,38 +226,39 @@ def log(msg:str):
     statusLine.config(text=msg)
     print (msg)
 
-def logMinesRemaining():
-    log("Mines Remaining: %d\t Cleared: %d" % (G.mineCount - G.markedCount, G.clearedCount))
+def updateDisplayedCounts():
+    log("Mines Remaining: %d\t Cleared: %d\tClicks: %d" %
+        (G.numMines - G.numMarked, G.numCleared, G.numClicks))
 
 # Fill the middle frame with a grid of squares
 # Then ranomly place a mine under some of them
 #
 def newGame():
-    G.markedCount = 0
-    G.clearedCount = 0
-    G.tiles.clear()
+    G.numMarked = 0
+    G.numCleared = 0
+    G.tileRowArray.clear()
     for r in range(G.gridRows):
         tileRow = []
         for c in range(G.gridCols):
             tile = Tile(G.frame, c, r, TEXT_HIDDEN)
             tileRow.append(tile)
             tile.grid(row=r, column=c, sticky="ewns") #ewns = fill grid cell
-        G.tiles.append(tileRow)
+        G.tileRowArray.append(tileRow)
     mineIndices = []
-    if G.mineCount != placeMinesRandomly(G.mineCount, G.tiles, mineIndices):
-        raise ValueError("Didn't place %s mines, panic" % G.mineCount)
-    logMinesRemaining()
+    if G.numMines != placeMinesRandomly(G.numMines, G.tileRowArray, mineIndices):
+        raise ValueError("Didn't place %s mines, panic" % G.numMines)
+    updateDisplayedCounts()
 
 # Pop ConfigDialog to set game parameters
 #
 def setupGame():
-    d = ConfigDialog(win, G.mineCount, G.gridRows, G.gridCols)
+    d = ConfigDialog(win, G.numMines, G.gridRows, G.gridCols)
     d.eMines.focus_set()
     d.top.grab_set()
     win.wait_window(d.top)
     if d.changed:
-        # TODO Understand why this code works after d.top destroyed ??
-        G.mineCount = d.mines
+        # d.top (widget) destroyed but d still exists..
+        G.numMines = d.mines
         G.gridRows= d.rows
         G.gridCols= d.cols
         newGame()
@@ -326,7 +336,7 @@ toolbar = Tk.Frame( win )
 Tk.Button(toolbar, text="new game", command=newGame).pack(side="left", padx=2, pady=2)
 Tk.Button(toolbar, text="setup",   command=setupGame).pack(side="left", padx=2, pady=2)
 Tk.Button(toolbar, text="quit",     command=quit).pack(side="right", padx=2, pady=2)
-Tk.Button(toolbar, text="TODO use images!").pack(side="left", padx=2, pady=2)
+#Tk.Button(toolbar, text="TODO use images!").pack(side="left", padx=2, pady=2)
 toolbar.pack(side="top", fill="x")
 
 G.frame = Tk.Frame(win, width=TILE_SIZE * G.gridCols, height=TILE_SIZE * G.gridRows)
