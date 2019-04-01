@@ -32,8 +32,8 @@ def describe(target, sizes, counts) -> str:
 #so the best configs are at the beginning, worst at the end
 #
 def generateConfigs(sizes:[], target:int, silent=False) -> list:
-    if not silent:
-        trace("generateConfigs(%s,%d)"%(sizes,target))
+    # if not silent:
+    #     trace("generateConfigs(%s,%d)"%(sizes,target))
     ret = []
     if 1<len(sizes):        #Recursive case
         (size, sRest) = (sizes[0], sizes[1:])
@@ -59,12 +59,14 @@ def generateConfigs(sizes:[], target:int, silent=False) -> list:
         raise AssertionError("generateConfig() called with empty sizes list")
     return ret
 
-print("Results: ")
-(target,sizes) = (30,[11,9,6,2]) #must be ascending sorted
-configs = sorted(generateConfigs(sizes, target), key=lambda x: getItemCount(x))  #smallest itemcount first
-for i in range(len(configs)) : print(configs[i],describe(target,sizes,configs[i]))
-print("Best is:", configs[0])
-print(describe(target, sizes, configs[0]))
+print("Example 2: ")
+#this is where python's rapid prototyping really shines..:
+(captains, shipTypes, sizes, custs, custLoads)=(12, 3, [7, 4, 1], 3, [35, 45, 25])
+for target in custLoads:
+    config=sorted(generateConfigs(sizes, target), key=lambda x: getItemCount(x))[0]
+    print("Best is:", config)
+    print(describe(target, sizes, config))
+
 
 # Some more tests
 
