@@ -2,7 +2,7 @@ from shiptypes import fewestBricks
 
 # change True to False to reduce logging output
 def trace(msg:str):
-    if False:
+    if msg:
         print(msg)
 
 def getItemCount( counts ) -> int :
@@ -23,61 +23,58 @@ def describe(target, sizes, counts) -> str:
     return ret
 
 #ASSUMES sizes sorted DESCENDING
-#hardcoded for array size 4
 #returns list of pairs with first entry being count array, second being sum of counts
 #list is sorted with best solution with smallest count at start
-def generateConfigs(sizes:[], target:int) -> list:
-    assert 4==len(sizes)
-    (s0,s1,s2,s3)=(sizes[0],sizes[1],sizes[2],sizes[3])
-    assert s3<=s2 and s2<=s1 and s1<=s0
-    configs = []
-    trace( "target:%d, sizes: %s"%(target, sizes) )
-    i0Max = int(target/s0)
-    for i0 in range(i0Max,-1,-1):
-        tgt0 = target-i0*s0
-        trace( "i%d=%d leaves %d to fill"%(0, i0, tgt0) )
-        i1Max = int(tgt0/s1)
-        for i1 in range(i1Max,-1,-1):
-            tgt1 = tgt0-i1*s1
-            trace("\ti%d=%d leaves %d to fill"%(1, i1, tgt1))
-            i2Max = int(tgt1/s2)
-            for i2 in range(i2Max,-1,-1):
-                tgt2 = tgt1-i2*s2
-                trace("\t\ti%d=%d leaves %d to fill"%(2, i2, tgt2))
+def generateConfigs(sizes:[], target:int, silent=False) -> list:
+    if not silent:
+        trace("generateConfigs(%s,%d)"%(sizes,target))
+    ret = []
+    if 1<len(sizes):        #Recursive case
+        (size, sRest) = (sizes[0], sizes[1:])
+        # print("size: %d, sRest: %s"%(size, sRest))
+        assert sRest[0]<size
+        for count in range(int(target / size), -1, -1):
+            targetRest = target - size*count
+            # trace("size %d: %d*%d leaves %d, collect subconfs using %s:" % (size,count,size,targetRest,sRest))
+            assert 0<=targetRest
+            for sub in generateConfigs(sRest, targetRest, silent ):
+                config = [count] + sub
+                #trace("Prepend %d to subconfig %s -> %s" % (count, sub, config))
+                ret.append(config)
+    elif 1 == len(sizes):   #Base case
+        count = int(target/sizes[0])
+        targetRest = target - sizes[0] * count
+        if 0 == targetRest: #works
+            # trace("Works: %d*%d"%(count,sizes[0]))
+            ret.append([count])
+        # else:               #drop
+            # trace("Fails: %d (remainder: %d)"%(sizes[0],targetRest))
+    else:
+        raise AssertionError("generateConfig() called with empty sizes list")
+    return ret
 
-                # No loop for i3, it either can work or not
-                i3 = int(tgt2/s3)
-                tgt3 = tgt2-i3*s3
-                assert 0 <= tgt3
-                counts = [i0, i1, i2, i3]
-                if 0 == tgt3:
-                    trace( "counts is %s"%counts)
-                    trace( describe(target, sizes, counts) )
-                    configs.append((counts, getItemCount(counts)))
-                else:
-                    trace( "Dropping: %s bc: %s (rem: %d)"%
-                           (counts, describe(target,sizes,counts), tgt3) )
-    # configs.sort(lambda x: x[1]) #sort on the second tuple element FAILS
-    return sorted(configs, key=lambda x: x[1])  #smallest itemcount first
-
-
-
-target = 30
-sizes = [11,9,6,1] #must be ascending sorted
-configs = generateConfigs(sizes, target)
 print("Results: ")
-for i in range(len(configs)) : print(configs[i])
+(target,sizes) = (30,[11,9,6,2]) #must be ascending sorted
+configs = sorted(generateConfigs(sizes, target), key=lambda x: getItemCount(x))  #smallest itemcount first
+for i in range(len(configs)) : print(configs[i],describe(target,sizes,configs[i]))
 print("Best is:", configs[0])
-print(describe(target, sizes, configs[0][0]))
+print(describe(target, sizes, configs[0]))
 
-assert 4 == generateConfigs(sizes, target)[0][1]
+# Some more tests
 
-(target,sizes) = (40,[9,6,5,1])
-assert 6 == generateConfigs(sizes, target)[0][1]
+def testCase(expect, sizes, target):
+    print("Verifying minimal shipping of %d with sizes %s is %d"%(target,sizes,expect))
+    assert expect == getItemCount(
+        sorted(
+            generateConfigs(sizes, target, True), #silent
+            key=lambda x: getItemCount(x)         #sort on number of items used
+        )[0]                                      #first result
+)
 
-(target,sizes) = (30,[9,6,5,1])
-assert 4 == generateConfigs(sizes, target)[0][1]
-
-(target,sizes) = (50,[10,7,3,2])
-assert 5 == generateConfigs(sizes, target)[0][1]
-
+testCase(4, [11,9,6,2], 30)
+testCase(6, [9,6,5,1],  40)
+testCase(4, [9,6,5,1],  30)
+testCase(5, [10,7,3,2], 50)
+testCase(11,[5, 3, 1],  53)
+testCase(10,[5,1],      50)
+testCase(10,[5],        50)
