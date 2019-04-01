@@ -22,9 +22,15 @@ def describe(target, sizes, counts) -> str:
     ret += ", items: %d" % getItemCount(counts)
     return ret
 
-#ASSUMES sizes sorted DESCENDING
-#returns list of pairs with first entry being count array, second being sum of counts
-#list is sorted with best solution with smallest count at start
+#Requires sizes sorted in descending order!
+#Returns list of count arrays
+#list is not sorted but you can get a sorted copy of the returned value like this:
+#
+#sortConfigs = sorted(generateConfigs(sizes, target), key=lambda x: getItemCount(x))
+#
+#this uses getItemCount() function (see above) to help sort the configs
+#so the best configs are at the beginning, worst at the end
+#
 def generateConfigs(sizes:[], target:int, silent=False) -> list:
     if not silent:
         trace("generateConfigs(%s,%d)"%(sizes,target))
