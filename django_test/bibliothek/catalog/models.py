@@ -29,6 +29,17 @@ class Genre(models.Model):
         return self.name
 
 
+class Language(models.Model):
+    """Model representing a Language (e.g. English, French, Japanese, etc.)"""
+    name = models.CharField(
+        max_length=200,
+        help_text="Enter the book's natural language (e.g. English, French, Japanese etc.)"
+    )
+
+    def __str__(self):
+        """String for representing the Model object (in Admin site etc.)"""
+        return self.name
+
 # Used to generate URLs by reversing the URL patterns
 # In English: read as 'viewNameToUrl'
 from django.urls import reverse
@@ -58,6 +69,8 @@ class Book(models.Model):
     #
     genre = models.ManyToManyField(Genre, help_text='Select a genre for this book')
 
+    language = models.ForeignKey(Language, on_delete=models.SET_NULL, null=True)
+
     def __str__(self):
         """String for representing the Model object."""
         return self.title
@@ -68,7 +81,6 @@ class Book(models.Model):
 
 
 import uuid # Required for unique book instances
-
 class BookInstance(models.Model):
     """Model representing an instance or copy of a book (that can be borrowed
     from the library)."""
@@ -76,7 +88,7 @@ class BookInstance(models.Model):
         primary_key=True, default=uuid.uuid4,
         help_text='Unique ID for this particular book across whole library'
     )
-    book = models.ForeignKey('Book', on_delete=models.SET_NULL, null=True)
+    book = models.ForeignKey(Book, on_delete=models.SET_NULL, null=True)
     imprint = models.CharField(max_length=200, help_text="What's an imprint?")
     due_back = models.DateField(null=True, blank=True)
 
