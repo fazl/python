@@ -19,3 +19,24 @@ from django.urls import path
 urlpatterns = [
     path('admin/', admin.site.urls),
 ]
+
+# fwd reqs with url catalog/ to module catalog/urls.py
+#
+from django.urls import include
+urlpatterns += [
+    path('catalog/', include('catalog.urls')),
+]
+
+#Redirect the base URL to the only application
+#
+from django.views.generic import RedirectView
+urlpatterns += [
+    # '/catalog/' here vs 'catalog/' above, seems inconsistent
+    path('', RedirectView.as_view(url='/catalog/', permanent=True)),
+]
+
+# serve static files (useful during development only)
+# looks like voodoo though..
+from django.conf import settings
+from django.conf.urls.static import static
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
