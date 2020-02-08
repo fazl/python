@@ -238,6 +238,7 @@ def updateDisplayedCounts():
 def newGame():
     G.numMarked = 0
     G.numCleared = 0
+    G.numClicks = 0
     G.tileRowArray.clear()
     for r in range(G.gridRows):
         tileRow = []
