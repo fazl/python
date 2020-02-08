@@ -56,7 +56,7 @@ class G():
     frame  = None
 
 
-# Wonder what would happen if there were separate instances ?
+# (Wonder what would happen, were there separate instances ?)
 class TileState():
     HIDDEN, MARKED, MAYBE = range(0, 3)
     labels= [ TEXT_HIDDEN, TEXT_MARKED, TEXT_MAYBE ]
