@@ -30,12 +30,12 @@ Olaf: Abgleich meeting next week Tue 19/1, 1pm-2pm
 2021-01-12 Tue 07:35-21:41  breaks: 12:20-13:05 & 15m & 10m & 20m & 15m = 10:00
 [] Review pull requests outstanding
 
-2021-01-13 Wed 08:15-23:58 breaks: 12:05-12:50 &15m+15m+1:25 = 15:45 – 2:40 = 13:05
+2021-01-13 Wed 08:15-23:58 breaks: 12:05-12:50 &15m&15m&1:25 = 15:45 – 2:40 = 13:05
 
 Some good background on packaging, a fast whirlwind tour of VSCode/Conan/Cmake.
 
-2021-01-14 Thu 07:45-19:05 breaks: 50m & 15m & 10m = 11:20 – 1:15 = 10:05
-Night: 21:05-23:30 (wanted to try out https://github.com/jgonzalezdr/CppUMockGen, but looks like Therapy tests already use it at least in places. Discovered, function template instantiation allows overloading on return type, I guess because it’s explicitly instantiating the overload requested..)
+2021-01-14 Thu 07:45-19:05 & 21:05-23:30 Breaks: 50m & 15m & 10m = 11:20 – 1:15 = 10:05
+Night: (wanted to try out https://github.com/jgonzalezdr/CppUMockGen, but looks like Therapy tests already use it at least in places. Discovered, function template instantiation allows overloading on return type, I guess because it’s explicitly instantiating the overload requested..)
 
 2021-01-15 Fri 08:00-17:05 breaks: 15m+1:05 & 15min = 9:05 – 1:35 = 7:30
 [x] 1p Purple challenge round
