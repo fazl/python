@@ -1,6 +1,8 @@
 # ParseDaybook
 # Automate tedious and tricky adding up of hours worked
 
+# TODO allow adding 20m worked-time like in breaks (i.e. non-ranges, durations)
+
 # Program starts here
 # ====================
 
