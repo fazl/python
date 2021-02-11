@@ -18,8 +18,7 @@ import json
 # print data['two']    
 def readScenarioTherapies(scenarioOutFile):
 
-  xValues = []
-  yValues = []
+  values = []
 
   with open(scenarioOutFile, 'r') as f:
     #c = csv.reader(f, delimiter = ",")
@@ -27,18 +26,23 @@ def readScenarioTherapies(scenarioOutFile):
       row=row.strip()
       data = json.loads(row)
       tfnType = data["Type"]
+      if tfnType.endswith("Finished"):
+          print( "..Skipping therapy Finished record" )
+          continue
       if tfnType.startswith("Delivery"):
           print( "..Skipping motor delivery record" )
           continue
       print("row: %s" % row)
       time = data["Time"]
-      duration = data["Duration"]
+      duration = None if tfnType.startswith("Bolus") else data["Duration"]
       factor = None
       amount = None
       if tfnType.startswith("Tbf"):
         factor = data["Factor"] 
+        values.append( (time,duration,tfnType,factor) )
       else:
         amount = data["Amount"] 
+        values.append( (time,duration,tfnType,amount) )
           
       # { "Time":0,   "Type":"T1Started", "Amount": 5000, "Duration": 1800 }
       # { "Time":120, "Type":"T2Started", "Amount":7000, "Duration":2100 }
@@ -49,10 +53,7 @@ def readScenarioTherapies(scenarioOutFile):
               (amount if factor==None else factor))
             )
       #force error if it cant find 3 entries
-      time, ideal, real = row[0], row[1], row[2]
-      xValues.append(row[0])
-      yValues.append(row[1])    
-  return xValues, yValues
+  return values
     
 # Try it:
 # mS, mU = readCsv("plot.csv")
