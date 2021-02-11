@@ -1,0 +1,110 @@
+{ "Time":0, "Type":"BasalStarted", "Amount": 5000, "Duration": 1800 }
+{ "Time":0, "Type":"DeliveryStarted" }
+{ "Time":1, "Type":"DeliveryFinished", "Amount":500 }
+{ "Time":120, "Type":"ExtendedBolusStarted", "Amount":7000, "Duration":2100 }
+{ "Time":120, "Type":"DeliveryStarted" }
+{ "Time":122, "Type":"DeliveryFinished", "Amount":932 }
+{ "Time":301, "Type":"DeliveryStarted" }
+{ "Time":304, "Type":"DeliveryFinished", "Amount":1099 }
+{ "Time":360, "Type":"TbfStarted", "Factor":2000, "Duration":900}
+{ "Time":360, "Type":"DeliveryStarted" }
+{ "Time":362, "Type":"DeliveryFinished", "Amount":868 }
+{ "Time":541, "Type":"DeliveryStarted" }
+{ "Time":547, "Type":"DeliveryFinished", "Amount":1600 }
+{ "Time":722, "Type":"DeliveryStarted" }
+{ "Time":728, "Type":"DeliveryFinished", "Amount":1600 }
+{ "Time":903, "Type":"DeliveryStarted" }
+{ "Time":909, "Type":"DeliveryFinished", "Amount":1600 }
+{ "Time":1084, "Type":"DeliveryStarted" }
+{ "Time":1087, "Type":"DeliveryFinished", "Amount":1250 }
+{ "Time":1087, "Type":"DeliveryStarted" }
+{ "Time":1089, "Type":"DeliveryFinished", "Amount":350 }
+{ "Time":1260, "Type":"TbfFinished" }
+{ "Time":1261, "Type":"DeliveryStarted" }
+{ "Time":1264, "Type":"DeliveryFinished", "Amount":1100 }
+{ "Time":1443, "Type":"DeliveryStarted" }
+{ "Time":1446, "Type":"DeliveryFinished", "Amount":1100 }
+{ "Time":1623, "Type":"DeliveryStarted" }
+{ "Time":1627, "Type":"DeliveryFinished", "Amount":1100 }
+{ "Time":1800, "Type":"BasalStarted", "Amount": 7500, "Duration": 1800 }
+{ "Time":1800, "Type":"BasalFinished" }
+{ "Time":1800, "Type":"DeliveryStarted" }
+{ "Time":1803, "Type":"DeliveryFinished", "Amount":1250 }
+{ "Time":1803, "Type":"DeliveryStarted" }
+{ "Time":1804, "Type":"DeliveryFinished", "Amount":100 }
+{ "Time":1981, "Type":"DeliveryStarted" }
+{ "Time":1987, "Type":"DeliveryFinished", "Amount":1350 }
+{ "Time":2161, "Type":"DeliveryStarted" }
+{ "Time":2163, "Type":"DeliveryFinished", "Amount":450 }
+{ "Time":2221, "Type":"ExtendedBolusFinished" }
+{ "Time":2221, "Type":"DeliveryStarted" }
+{ "Time":2223, "Type":"DeliveryFinished", "Amount":749 }
+{ "Time":2402, "Type":"DeliveryStarted" }
+{ "Time":2404, "Type":"DeliveryFinished", "Amount":749 }
+{ "Time":2583, "Type":"DeliveryStarted" }
+{ "Time":2585, "Type":"DeliveryFinished", "Amount":749 }
+{ "Time":2764, "Type":"DeliveryStarted" }
+{ "Time":2766, "Type":"DeliveryFinished", "Amount":749 }
+{ "Time":2820, "Type":"BolusStarted", "Amount":2000 }
+{ "Time":2820, "Type":"DeliveryStarted" }
+{ "Time":2823, "Type":"DeliveryFinished", "Amount":1250 }
+{ "Time":2823, "Type":"DeliveryStarted" }
+{ "Time":2825, "Type":"DeliveryFinished", "Amount":319 }
+{ "Time":2837, "Type":"BolusFinished" }
+{ "Time":2838, "Type":"DeliveryStarted" }
+{ "Time":2840, "Type":"DeliveryFinished", "Amount":749 }
+{ "Time":3019, "Type":"DeliveryStarted" }
+{ "Time":3021, "Type":"DeliveryFinished", "Amount":749 }
+{ "Time":3200, "Type":"DeliveryStarted" }
+{ "Time":3202, "Type":"DeliveryFinished", "Amount":749 }
+{ "Time":3380, "Type":"DeliveryStarted" }
+{ "Time":3383, "Type":"DeliveryFinished", "Amount":749 }
+{ "Time":3561, "Type":"DeliveryStarted" }
+{ "Time":3562, "Type":"DeliveryFinished", "Amount":183 }
+{ "Time":3600, "Type":"BasalStarted", "Amount": 10000, "Duration": 1800 }
+{ "Time":3600, "Type":"DeliveryStarted" }
+{ "Time":3603, "Type":"DeliveryFinished", "Amount":1000 }
+{ "Time":3781, "Type":"DeliveryStarted" }
+{ "Time":3784, "Type":"DeliveryFinished", "Amount":1000 }
+{ "Time":3962, "Type":"DeliveryStarted" }
+{ "Time":3965, "Type":"DeliveryFinished", "Amount":1000 }
+{ "Time":4143, "Type":"DeliveryStarted" }
+{ "Time":4146, "Type":"DeliveryFinished", "Amount":1000 }
+{ "Time":4324, "Type":"DeliveryStarted" }
+{ "Time":4327, "Type":"DeliveryFinished", "Amount":1000 }
+{ "Time":4505, "Type":"DeliveryStarted" }
+{ "Time":4508, "Type":"DeliveryFinished", "Amount":1000 }
+{ "Time":4620, "Type":"TbfStarted", "Factor":400, "Duration":1800}
+{ "Time":4620, "Type":"DeliveryStarted" }
+{ "Time":4621, "Type":"DeliveryFinished", "Amount":66 }
+{ "Time":4800, "Type":"DeliveryStarted" }
+{ "Time":4802, "Type":"DeliveryFinished", "Amount":400 }
+{ "Time":4981, "Type":"DeliveryStarted" }
+{ "Time":4983, "Type":"DeliveryFinished", "Amount":400 }
+{ "Time":5162, "Type":"DeliveryStarted" }
+{ "Time":5163, "Type":"DeliveryFinished", "Amount":400 }
+{ "Time":5343, "Type":"DeliveryStarted" }
+{ "Time":5344, "Type":"DeliveryFinished", "Amount":400 }
+{ "Time":5400, "Type":"BasalStarted", "Amount": 5000, "Duration": 1800 }
+{ "Time":5580, "Type":"DeliveryStarted" }
+{ "Time":5581, "Type":"DeliveryFinished", "Amount":199 }
+{ "Time":5760, "Type":"DeliveryStarted" }
+{ "Time":5761, "Type":"DeliveryFinished", "Amount":199 }
+{ "Time":5941, "Type":"DeliveryStarted" }
+{ "Time":5942, "Type":"DeliveryFinished", "Amount":199 }
+{ "Time":6122, "Type":"DeliveryStarted" }
+{ "Time":6123, "Type":"DeliveryFinished", "Amount":199 }
+{ "Time":6303, "Type":"DeliveryStarted" }
+{ "Time":6304, "Type":"DeliveryFinished", "Amount":138 }
+{ "Time":6421, "Type":"TbfFinished" }
+{ "Time":6421, "Type":"DeliveryStarted" }
+{ "Time":6422, "Type":"DeliveryFinished", "Amount":499 }
+{ "Time":6602, "Type":"DeliveryStarted" }
+{ "Time":6604, "Type":"DeliveryFinished", "Amount":499 }
+{ "Time":6783, "Type":"DeliveryStarted" }
+{ "Time":6784, "Type":"DeliveryFinished", "Amount":499 }
+{ "Time":6964, "Type":"DeliveryStarted" }
+{ "Time":6965, "Type":"DeliveryFinished", "Amount":499 }
+{ "Time":7144, "Type":"DeliveryStarted" }
+{ "Time":7145, "Type":"DeliveryFinished", "Amount":167 }
+{ "Time":7201, "Type":"BasalFinished" }
