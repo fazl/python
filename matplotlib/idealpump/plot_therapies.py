@@ -5,55 +5,59 @@ pendings=deque()
 # return the amount of therapy i up to time given
 # also reduce its amount by this
 # also reduce its duration and increase its start to time
-def chopPending( pends, i, time ):
-  tFn = pends[i]
+def chopPending( tFn, time ):
   tFnTime     = tFn[0]
   tFnDuration = tFn[1]
   tFnType     = tFn[2]
   tFnAmount   = tFn[3]
   chopDuration = time - tFnTime
   chopAmount = (chopDuration * tFnAmount)/tFnDuration
+
   leftAmount = tFnAmount - chopAmount
   assert 0<=leftAmount
   leftDuration = tFnDuration - chopDuration
   assert 0<=leftDuration
-  print("chopPending.. chop %s at %sS, was %sMU over (%s->+%s);  %.7smU from %s->%sS, leaves %.7sMU over (%s->+%s) " % 
-         (tFnType, time,tFnAmount,tFnTime,tFnDuration,chopAmount,tFnTime,time, leftAmount,time,leftDuration))
-  # update record before leaving here
-  pends[i] = (time,leftDuration,tFnType,leftAmount)
-  #tFn[0]=time     
-  #tFn[1]=leftDuration 
-  #tFn[3]=leftAmount   
 
-  return chopAmount
+  print("chopPending.. chop %s at %ss, was %sMU over (%s->+%s);  %.7smU from %s->%sS, leaves %.7sMU over (%s->+%s) " % 
+         (tFnType, time,tFnAmount,tFnTime,tFnDuration,chopAmount,tFnTime,time, leftAmount,time,leftDuration))
+
+  return chopAmount,(time,leftDuration,tFnType,leftAmount)
 
 def eat( time,duration,tfnType,amount ):
   if 0 != len(pendings):
-    #print("eat.. we have pendings")
     assert pendings[0][0] <= time
     if pendings[0][0] == time :
-      print("eat..new pending: startTime %s->+%s identical to pending therapies"%(time,duration)) 
+      print("eat.. case new pending: startTime %s->+%s identical to pending therapies"%(time,duration)) 
       #python paupers cant afford a push method
       pendings.append((time,duration,tfnType,amount)) 
     else:
-      print("eat.. chop/pop: new pending: startTime %s->+%s later than pending therapies" % (time,duration))
+      print("eat.. case chop+pop: %s %s->+%ss: %smU (later than pendings) " % (tfnType,time,duration,amount))
       # Does any pending finish before new start time?
       if any( p[0]+p[1] < time for p in pendings ):
         print( "eat.. OOPs! new %s starts after at least one pending ended!! please handle." % tfnType)
       else:
-        print("eat.. no pending finishes before new one starts; chop at new start %s"% time)
-        #new chunk starts at existing start, duration is time - existing time
+        print("eat.. chop %d pendings at %ss (none finish before new start) "% (len(pendings),time))
+        #new chunk starts at existing start, duration is (time - existing start)
         chunkStart = pendings[0][0]
         chunkDuration = time-chunkStart
         chunkAmount = 0
-        for i in range(len(pendings)):
-          chopAmount = chopPending( pendings, i, time )
+        #use while because chopping can remove used up pending therapies
+        choppedPendings=deque() #not efficient.. but pythonic? LOL
+        while 0<len(pendings):
+          firstPending = pendings.popleft()
+          (chopAmount,choppedPending) = chopPending( firstPending, time )
           chunkAmount += chopAmount
+          #drop the pending if is all used up
+          if not (0 in [choppedPending[1],choppedPending[-1]]): #remaining duration or amount is 0
+            choppedPendings.append(choppedPending)
+          else :
+           print("Dropping pending %s chopped to %s" % (firstPending,choppedPending) );
         print("plot %.7smU from %ss to %ss "% (chunkAmount,chunkStart, chunkStart+chunkDuration))  
-        
-      
+        pendings.extend( choppedPendings )
+        pendings.append((time,duration,tfnType,amount)) 
+        choppedPendings.clear() #maybe unnecessary
   else: 
-      print("therapy %s is first pending starting at %s->+%s" %(tfnType,time,duration))
+      print("eat..first therapy %s (%s->+%ss: %smU)" %(tfnType,time,duration,amount))
       pendings.append((time,duration,tfnType,amount)) 
 
 def handleMotorDelivery(data, values):
