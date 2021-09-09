@@ -11,6 +11,7 @@
 import fileinput
 import re           # Raw strings (prefixed with r) are handy for regexps
 from datetime import datetime as dt
+from datetime import timedelta
 
 # The last bit matches day names like Mon, Tue etc
 DATE_PART=r"^[\t ]*2021-\d?\d-\d?\d [MTWFS][aouehr][neduit]"
@@ -24,6 +25,7 @@ TIME_RANGE=r"[0-9]?[0-9]:[0-9][0-9]-[0-9]?[0-9]:[0-9][0-9]"
 #------------------------------------------------------------------------------
 # There has to be a better way than manually changing this to see debug output
 def dbg(msg):
+    #print(msg)
     pass #print(msg)
     
 #------------------------------------------------------------------------------
@@ -78,7 +80,12 @@ def timeRange2Delta(timeRange):
     FMT = '%H:%M'
     tdelta = dt.strptime(timeOut, FMT) - dt.strptime(timeIn, FMT)
     dbg("..-->%s"%tdelta)
-    assert tdelta.days == 0
+    if tdelta.days in [-1]:  # burning the midnight oil..
+        print( "Burning the midnight oil! tdelta: %s" % tdelta )
+        #tdelta.days = 0 #not allowed to change
+        tdelta = timedelta(hours=tdelta.hours, minutes=tdelta.minutes)
+    
+    assert tdelta.days in [0]
     return tdelta
 
 #------------------------------------------------------------------------------
@@ -132,8 +139,7 @@ def processDay(date,inOuts,breaks):
             assert False
             
     dbg("brkSum = %s" % brkSum)
-    print(">>%s, (worked: %s) - (breaks: %s) => (billable:%s)" % 
-          (date, workSum, brkSum, workSum - brkSum))
+    print(f">>{date}, => (billable:{workSum - brkSum})\t(worked: {workSum}) - (breaks: {brkSum})")
     
 #------------------------------------------------------------------------------
 def processLine(line):
